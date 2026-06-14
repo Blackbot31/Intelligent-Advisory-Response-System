@@ -2234,6 +2234,7 @@
             "dashboard",
             "analyse",
             "history",
+            "outcomes",
             "cce",
             "kau",
             "cru",
@@ -2246,12 +2247,21 @@
             "dashboard",
             "analyse",
             "history",
+            "outcomes",
             "cce",
             "kau",
             "cru",
             "rnn",
           ],
-          analyst: ["dashboard", "history", "kau", "cru", "idru", "rnn"],
+          analyst: [
+            "dashboard",
+            "history",
+            "outcomes",
+            "kau",
+            "cru",
+            "idru",
+            "rnn",
+          ],
           viewer: ["dashboard", "history"],
         };
 
@@ -2336,9 +2346,10 @@
         const accessSummary = document.getElementById("access-summary");
         if (accessSummary) {
           const subsystemAccess = {
-            admin: "CCE, KAU, CRU, IDRU, CEU, SRR, RNN — Full Access",
-            officer: "CCE, KAU, CRU, RNN — Surveillance & Coordination",
-            analyst: "KAU, CRU, IDRU, RNN — Analysis & Distribution",
+            admin: "CCE, KAU, CRU, IDRU, CEU, SRR, RNN, Outcomes — Full Access",
+            officer:
+              "CCE, KAU, CRU, RNN, Outcomes — Surveillance & Coordination",
+            analyst: "KAU, CRU, IDRU, RNN, Outcomes — Analysis & Distribution",
             viewer: "Reports History — Read Only",
           };
           accessSummary.innerHTML = `
