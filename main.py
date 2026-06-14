@@ -410,80 +410,125 @@ def model_status():
         }
     }
     
-    @app.post("/outcomes/record")
-    def record_outcome(data: OutcomeInput,
-                    authorization: Optional[str] = Header(None)):
-        import uuid
-        from datetime import datetime
+@app.post("/outcomes/record")
+def record_outcome(data: OutcomeInput,
+                   authorization: Optional[str] = Header(None)):
+    import uuid
+    from datetime import datetime
 
-        session = srr.verify_session(authorization) if authorization else None
-        recorded_by = session["username"] if session else "anonymous"
+    session = srr.verify_session(authorization) if authorization else None
+    recorded_by = session["username"] if session else "anonymous"
 
-        cases_change  = data.cases_after  - data.cases_before
-        deaths_change = data.deaths_after - data.deaths_before
+    cases_change  = data.cases_after  - data.cases_before
+    deaths_change = data.deaths_after - data.deaths_before
 
-        if cases_change < 0:
-            effectiveness = 1.0
-        elif cases_change == 0:
-            effectiveness = 0.7
-        else:
-            reduction_rate = abs(cases_change) / max(data.cases_before, 1)
-            effectiveness  = max(0.1, 0.5 - reduction_rate)
+    if cases_change < 0:
+        effectiveness = 1.0
+    elif cases_change == 0:
+        effectiveness = 0.7
+    else:
+        reduction_rate = abs(cases_change) / max(data.cases_before, 1)
+        effectiveness  = max(0.1, 0.5 - reduction_rate)
 
-        rating_scores = {
-            "Very Effective":     1.0,
-            "Effective":          0.75,
-            "Partially Effective": 0.5,
-            "Ineffective":        0.25,
-            "Unknown":            0.5
-        }
-        rating_score = rating_scores.get(data.outcome_rating, 0.5)
-        final_score  = round((effectiveness + rating_score) / 2, 3)
+    rating_scores = {
+        "Very Effective":     1.0,
+        "Effective":          0.75,
+        "Partially Effective": 0.5,
+        "Ineffective":        0.25,
+        "Unknown":            0.5
+    }
+    rating_score = rating_scores.get(data.outcome_rating, 0.5)
+    final_score  = round((effectiveness + rating_score) / 2, 3)
 
-        outcome = {
-            "outcome_id":          str(uuid.uuid4())[:8].upper(),
-            "report_id":           data.report_id,
-            "disease":             data.disease,
-            "region":              data.region,
-            "cce_recommendation":  data.cce_recommendation,
-            "cases_before":        data.cases_before,
-            "cases_after":         data.cases_after,
-            "deaths_before":       data.deaths_before,
-            "deaths_after":        data.deaths_after,
-            "outcome_rating":      data.outcome_rating,
-            "effectiveness_score": final_score,
-            "notes":               data.notes,
-            "recorded_by":         recorded_by,
-            "timestamp":           datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
+    outcome = {
+        "outcome_id":          str(uuid.uuid4())[:8].upper(),
+        "report_id":           data.report_id,
+        "disease":             data.disease,
+        "region":              data.region,
+        "cce_recommendation":  data.cce_recommendation,
+        "cases_before":        data.cases_before,
+        "cases_after":         data.cases_after,
+        "deaths_before":       data.deaths_before,
+        "deaths_after":        data.deaths_after,
+        "outcome_rating":      data.outcome_rating,
+        "effectiveness_score": final_score,
+        "notes":               data.notes,
+        "recorded_by":         recorded_by,
+        "timestamp":           datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
 
-        crud.save_outcome(outcome)
+    crud.save_outcome(outcome)
 
-        # Feed outcome back to CCE as a reward signal
-        reward = final_score
-        state  = [
-            data.cases_before, data.deaths_before,
-            0.4, 3, 20, 0.7, 0.3, 0.5,
-            14, 0.6
-        ]
-        action_map = {
-            "Deploy medical teams to affected region":          0,
-            "Increase resource allocation to sub-national units": 1,
-            "Issue public health advisory":                     2,
-            "Activate emergency coordination protocol":         3
-        }
-        action = action_map.get(data.cce_recommendation, 0)
-        next_state = [max(0, s * 0.9) for s in state]
-        cce.remember(state, action, reward, next_state, False)
-        cce.replay()
-        cce.save_model()
+    # Feed outcome back to CCE as a reward signal
+    reward = final_score
+    state  = [
+        data.cases_before, data.deaths_before,
+        0.4, 3, 20, 0.7, 0.3, 0.5,
+        14, 0.6
+    ]
+    action_map = {
+        "Deploy medical teams to affected region":          0,
+        "Increase resource allocation to sub-national units": 1,
+        "Issue public health advisory":                     2,
+        "Activate emergency coordination protocol":         3
+    }
+    action = action_map.get(data.cce_recommendation, 0)
+    next_state = [max(0, s * 0.9) for s in state]
+    cce.remember(state, action, reward, next_state, False)
+    cce.replay()
+    cce.save_model()
 
+    return {
+        "success":             True,
+        "outcome_id":          outcome["outcome_id"],
+        "effectiveness_score": final_score,
+        "message":             f"Outcome recorded and CCE updated with reward {reward}"
+    }
+
+
+@app.get("/outcomes/history")
+def outcomes_history():
+    return crud.load_all_outcomes()
+
+
+@app.get("/outcomes/summary")
+def outcomes_summary():
+    outcomes = crud.load_all_outcomes()
+    if not outcomes:
         return {
-            "success":             True,
-            "outcome_id":          outcome["outcome_id"],
-            "effectiveness_score": final_score,
-            "message":             f"Outcome recorded and CCE updated with reward {reward}"
+            "total_outcomes":      0,
+            "average_effectiveness": 0,
+            "rating_distribution": {},
+            "most_effective_action": "No data yet"
         }
+
+    avg = round(
+        sum(o["effectiveness_score"] for o in outcomes) / len(outcomes), 3
+    )
+    ratings = {}
+    for o in outcomes:
+        r = o["outcome_rating"]
+        ratings[r] = ratings.get(r, 0) + 1
+
+    action_scores = {}
+    for o in outcomes:
+        a = o["cce_recommendation"]
+        if a not in action_scores:
+            action_scores[a] = []
+        action_scores[a].append(o["effectiveness_score"])
+
+    best_action = max(
+        action_scores,
+        key=lambda a: sum(action_scores[a]) / len(action_scores[a])
+    ) if action_scores else "No data"
+
+    return {
+        "total_outcomes":        len(outcomes),
+        "average_effectiveness": avg,
+        "rating_distribution":   ratings,
+        "most_effective_action": best_action,
+        "recent_outcomes":       outcomes[:5]
+    }
 
 
 @app.get("/outcomes/history")
