@@ -1,6 +1,12 @@
 from database.models import (
     SessionLocal, User, OutbreakReport,
     ResourceAllocation, Stakeholder,
+    EngagementLog, AccessLog, InterventionOutcome
+)
+
+from database.models import (
+    SessionLocal, User, OutbreakReport,
+    ResourceAllocation, Stakeholder,
     EngagementLog, AccessLog
 )
 
