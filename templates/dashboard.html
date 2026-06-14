@@ -896,6 +896,9 @@
           <div class="nav-item" onclick="showSection('history', this)">
             <span class="nav-icon">⬡</span> Reports History
           </div>
+          <div class="nav-item" onclick="showSection('outcomes', this)">
+            <span class="nav-icon">⬡</span> Outcomes
+          </div>
         </div>
         <div class="nav-section">
           <div class="nav-label">Subsystems</div>
@@ -1992,6 +1995,170 @@
                   id="rnn-chart"
                   style="width: 100%; max-height: 250px"
                 ></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── INTERVENTION OUTCOMES ── -->
+        <div class="section" id="sec-outcomes">
+          <div class="page-title">📊 INTERVENTION OUTCOME TRACKING</div>
+          <div class="alert alert-info">
+            ℹ Record what happened after a recommendation was implemented. This
+            helps the system learn which actions work best.
+          </div>
+
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>RECORD OUTCOME
+              </div>
+              <div class="form-group">
+                <label>Report ID (from Full Analysis)</label>
+                <input
+                  type="text"
+                  id="oc-report-id"
+                  placeholder="e.g. 935A9370"
+                />
+              </div>
+              <div class="form-group">
+                <label>Disease</label>
+                <input type="text" id="oc-disease" value="Mpox" />
+              </div>
+              <div class="form-group">
+                <label>Region</label>
+                <input type="text" id="oc-region" value="North Central Zone" />
+              </div>
+              <div class="form-group">
+                <label>CCE Recommendation That Was Implemented</label>
+                <select id="oc-recommendation">
+                  <option>Deploy medical teams to affected region</option>
+                  <option>
+                    Increase resource allocation to sub-national units
+                  </option>
+                  <option>Issue public health advisory</option>
+                  <option>Activate emergency coordination protocol</option>
+                </select>
+              </div>
+              <div class="grid-2">
+                <div class="form-group">
+                  <label>Cases Before</label>
+                  <input type="number" id="oc-cases-before" value="320" />
+                </div>
+                <div class="form-group">
+                  <label>Cases After</label>
+                  <input type="number" id="oc-cases-after" value="280" />
+                </div>
+              </div>
+              <div class="grid-2">
+                <div class="form-group">
+                  <label>Deaths Before</label>
+                  <input type="number" id="oc-deaths-before" value="28" />
+                </div>
+                <div class="form-group">
+                  <label>Deaths After</label>
+                  <input type="number" id="oc-deaths-after" value="22" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Outcome Rating</label>
+                <select id="oc-rating">
+                  <option>Very Effective</option>
+                  <option>Effective</option>
+                  <option>Partially Effective</option>
+                  <option>Ineffective</option>
+                  <option>Unknown</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Notes (Optional)</label>
+                <textarea
+                  id="oc-notes"
+                  placeholder="Describe what happened after the intervention..."
+                >
+                </textarea>
+              </div>
+              <button
+                class="btn btn-primary"
+                style="width: 100%"
+                onclick="recordOutcome()"
+              >
+                ▶ RECORD OUTCOME
+              </button>
+              <div
+                class="result-box"
+                id="oc-result"
+                style="min-height: 60px; margin-top: 0.75rem"
+              >
+                —
+              </div>
+            </div>
+
+            <div class="panel">
+              <div
+                class="panel-title"
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                "
+              >
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <span class="dot"></span>OUTCOME SUMMARY
+                </div>
+                <button
+                  class="btn btn-ghost"
+                  onclick="loadOutcomeSummary()"
+                  style="padding: 2px 14px; font-size: 0.78rem"
+                >
+                  ↻ REFRESH
+                </button>
+              </div>
+              <div id="oc-summary">
+                <div
+                  style="
+                    color: var(--text-dim);
+                    font-family: &quot;Share Tech Mono&quot;, monospace;
+                    font-size: 0.78rem;
+                    padding: 1rem;
+                  "
+                >
+                  Click refresh to load outcome summary.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top: 1rem">
+            <div
+              class="panel-title"
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+              "
+            >
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span class="dot"></span>OUTCOME HISTORY
+              </div>
+              <button
+                class="btn btn-ghost"
+                onclick="loadOutcomeHistory()"
+                style="padding: 2px 14px; font-size: 0.78rem"
+              >
+                ↻ LOAD HISTORY
+              </button>
+            </div>
+            <div id="oc-history">
+              <div
+                style="
+                  color: var(--text-dim);
+                  font-family: &quot;Share Tech Mono&quot;, monospace;
+                  font-size: 0.78rem;
+                  padding: 1rem;
+                "
+              >
+                Click Load History to view all recorded outcomes.
               </div>
             </div>
           </div>
@@ -3618,6 +3785,225 @@
             d.total_resources;
         } catch (e) {
           el.innerHTML = `<div class='alert alert-critical'>Error: ${e.message}</div>`;
+        }
+      }
+
+      // ── INTERVENTION OUTCOMES ──
+      async function recordOutcome() {
+        const el = document.getElementById("oc-result");
+        el.textContent = "Recording outcome...";
+
+        try {
+          const headers = { "Content-Type": "application/json" };
+          if (srrToken) headers["authorization"] = srrToken;
+
+          const r = await fetch(`${API}/outcomes/record`, {
+            method: "POST",
+            headers: headers,
+            body: JSON.stringify({
+              report_id: document.getElementById("oc-report-id").value,
+              disease: document.getElementById("oc-disease").value,
+              region: document.getElementById("oc-region").value,
+              cce_recommendation:
+                document.getElementById("oc-recommendation").value,
+              cases_before: +document.getElementById("oc-cases-before").value,
+              cases_after: +document.getElementById("oc-cases-after").value,
+              deaths_before: +document.getElementById("oc-deaths-before").value,
+              deaths_after: +document.getElementById("oc-deaths-after").value,
+              outcome_rating: document.getElementById("oc-rating").value,
+              notes: document.getElementById("oc-notes").value,
+            }),
+          });
+
+          const d = await r.json();
+          el.className = "result-box";
+          el.textContent =
+            `Outcome recorded successfully.\n` +
+            `Outcome ID         : ${d.outcome_id}\n` +
+            `Effectiveness Score: ${d.effectiveness_score}\n` +
+            `${d.message}`;
+
+          logActivity(
+            `Outcome recorded — Effectiveness: ${d.effectiveness_score}`,
+            d.effectiveness_score >= 0.7 ? "success" : "info",
+          );
+
+          loadOutcomeSummary();
+        } catch (e) {
+          el.textContent = "Error: " + e.message;
+          el.className = "result-box error";
+        }
+      }
+
+      async function loadOutcomeSummary() {
+        const el = document.getElementById("oc-summary");
+
+        try {
+          const r = await fetch(`${API}/outcomes/summary`);
+          const d = await r.json();
+
+          if (d.total_outcomes === 0) {
+            el.innerHTML = `<div style="color:var(--text-dim);
+        font-family:'Share Tech Mono',monospace;font-size:0.78rem;
+        padding:1rem">No outcomes recorded yet.</div>`;
+            return;
+          }
+
+          const effColor =
+            d.average_effectiveness >= 0.7
+              ? "#00ff9d"
+              : d.average_effectiveness >= 0.5
+                ? "#ffb700"
+                : "#ff4b4b";
+
+          let html = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;
+                  gap:0.75rem;margin-bottom:1rem">
+        <div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);
+                    border-radius:6px;padding:0.75rem;text-align:center">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;
+                      color:var(--text-dim);margin-bottom:4px">
+            TOTAL OUTCOMES
+          </div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:1.5rem;
+                      color:var(--accent)">
+            ${d.total_outcomes}
+          </div>
+        </div>
+        <div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);
+                    border-radius:6px;padding:0.75rem;text-align:center">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;
+                      color:var(--text-dim);margin-bottom:4px">
+            AVG EFFECTIVENESS
+          </div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:1.5rem;
+                      color:${effColor}">
+            ${(d.average_effectiveness * 100).toFixed(1)}%
+          </div>
+        </div>
+      </div>
+
+      <div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);
+                  border-radius:6px;padding:0.75rem;margin-bottom:0.75rem">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:0.72rem;
+                    color:var(--text-dim);margin-bottom:4px">
+          MOST EFFECTIVE ACTION
+        </div>
+        <div style="font-size:0.85rem;color:var(--accent3)">
+          ${d.most_effective_action}
+        </div>
+      </div>
+
+      <div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);
+                  border-radius:6px;padding:0.75rem">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:0.72rem;
+                    color:var(--text-dim);margin-bottom:0.5rem">
+          RATING DISTRIBUTION
+        </div>
+        ${Object.entries(d.rating_distribution)
+          .map(
+            ([k, v]) => `
+          <div style="display:flex;justify-content:space-between;
+                      font-size:0.78rem;margin-bottom:2px">
+            <span style="color:var(--text)">${k}</span>
+            <span style="color:var(--accent);font-family:'Share Tech Mono',
+                         monospace">${v}</span>
+          </div>
+        `,
+          )
+          .join("")}
+      </div>
+    `;
+          el.innerHTML = html;
+        } catch (e) {
+          el.innerHTML = `<div class='alert alert-critical'>
+      Error: ${e.message}</div>`;
+        }
+      }
+
+      async function loadOutcomeHistory() {
+        const el = document.getElementById("oc-history");
+        el.innerHTML =
+          "<div style='color:var(--text-dim);padding:1rem'>Loading...</div>";
+
+        try {
+          const r = await fetch(`${API}/outcomes/history`);
+          const d = await r.json();
+
+          if (d.length === 0) {
+            el.innerHTML = `<div style="color:var(--text-dim);
+        font-family:'Share Tech Mono',monospace;font-size:0.78rem;
+        padding:1rem">No outcomes recorded yet.</div>`;
+            return;
+          }
+
+          const effColors = (score) =>
+            score >= 0.7 ? "#00ff9d" : score >= 0.5 ? "#ffb700" : "#ff4b4b";
+
+          let html = `
+      <table>
+        <thead>
+          <tr>
+            <th>Outcome ID</th>
+            <th>Disease</th>
+            <th>Region</th>
+            <th>Action Taken</th>
+            <th>Cases Before→After</th>
+            <th>Rating</th>
+            <th>Effectiveness</th>
+            <th>Recorded By</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+          d.forEach((o) => {
+            const trend =
+              o.cases_after < o.cases_before
+                ? "↓"
+                : o.cases_after > o.cases_before
+                  ? "↑"
+                  : "→";
+            const trendColor =
+              o.cases_after < o.cases_before
+                ? "#00ff9d"
+                : o.cases_after > o.cases_before
+                  ? "#ff4b4b"
+                  : "#ffb700";
+            html += `
+        <tr>
+          <td style="font-family:'Share Tech Mono',monospace;font-size:0.72rem">
+            ${o.outcome_id}
+          </td>
+          <td>${o.disease}</td>
+          <td>${o.region}</td>
+          <td style="font-size:0.78rem">${o.cce_recommendation}</td>
+          <td style="font-family:'Share Tech Mono',monospace;font-size:0.78rem">
+            ${o.cases_before}
+            <span style="color:${trendColor}">${trend}</span>
+            ${o.cases_after}
+          </td>
+          <td>${o.outcome_rating}</td>
+          <td style="font-family:'Share Tech Mono',monospace;
+                     color:${effColors(o.effectiveness_score)}">
+            ${(o.effectiveness_score * 100).toFixed(1)}%
+          </td>
+          <td style="font-size:0.75rem;color:var(--text-dim)">
+            ${o.recorded_by}
+          </td>
+          <td style="font-size:0.72rem;color:var(--text-dim)">
+            ${o.timestamp}
+          </td>
+        </tr>
+      `;
+          });
+
+          html += `</tbody></table>`;
+          el.innerHTML = html;
+        } catch (e) {
+          el.innerHTML = `<div class='alert alert-critical'>
+      Error: ${e.message}</div>`;
         }
       }
     </script>
