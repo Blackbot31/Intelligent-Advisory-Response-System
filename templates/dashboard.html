@@ -1,0 +1,3625 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IARMS Dashboard</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <style>
+      :root {
+        --bg: #050d1a;
+        --panel: #080f1f;
+        --border: #0d2540;
+        --accent: #00e5ff;
+        --accent2: #ff4b4b;
+        --accent3: #00ff9d;
+        --accent4: #ffb700;
+        --text: #c8daf0;
+        --text-dim: #4a6080;
+        --glow: 0 0 12px rgba(0, 229, 255, 0.35);
+        --glow-red: 0 0 12px rgba(255, 75, 75, 0.35);
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Exo 2", sans-serif;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* Grid background */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* ── HEADER ── */
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(5, 13, 26, 0.92);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border);
+        padding: 0 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 64px;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .logo-icon {
+        width: 36px;
+        height: 36px;
+        border: 2px solid var(--accent);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--glow);
+        font-family: "Share Tech Mono", monospace;
+        font-size: 13px;
+        color: var(--accent);
+        animation: pulse 3s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          box-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+        }
+        50% {
+          box-shadow: 0 0 20px rgba(0, 229, 255, 0.7);
+        }
+      }
+      .logo-text {
+        font-family: "Rajdhani", sans-serif;
+        font-weight: 700;
+        font-size: 1.3rem;
+        letter-spacing: 2px;
+      }
+      .logo-text span {
+        color: var(--accent);
+      }
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+      }
+      .status-badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: "Share Tech Mono", monospace;
+        font-size: 11px;
+        color: var(--accent3);
+      }
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent3);
+        animation: blink 1.5s ease-in-out infinite;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.2;
+        }
+      }
+      .header-time {
+        font-family: "Share Tech Mono", monospace;
+        font-size: 12px;
+        color: var(--text-dim);
+      }
+
+      /* ── LAYOUT ── */
+      .layout {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        min-height: calc(100vh - 64px);
+        position: relative;
+        z-index: 1;
+      }
+
+      /* ── SIDEBAR ── */
+      aside {
+        background: var(--panel);
+        border-right: 1px solid var(--border);
+        padding: 1.5rem 0;
+        position: sticky;
+        top: 64px;
+        height: calc(100vh - 64px);
+        overflow-y: auto;
+      }
+      .nav-section {
+        margin-bottom: 1.5rem;
+      }
+      .nav-label {
+        font-family: "Share Tech Mono", monospace;
+        font-size: 9px;
+        letter-spacing: 3px;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        padding: 0 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0.65rem 1.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-dim);
+        border-left: 2px solid transparent;
+        position: relative;
+      }
+      .nav-item:hover,
+      .nav-item.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: rgba(0, 229, 255, 0.05);
+      }
+      .nav-icon {
+        font-size: 16px;
+        width: 20px;
+        text-align: center;
+      }
+      .nav-badge {
+        margin-left: auto;
+        background: var(--accent2);
+        color: white;
+        font-size: 9px;
+        padding: 1px 5px;
+        border-radius: 8px;
+        font-family: "Share Tech Mono", monospace;
+      }
+
+      /* ── MAIN ── */
+      main {
+        padding: 1.5rem;
+        overflow-y: auto;
+      }
+
+      /* ── SECTION ── */
+      .section {
+        display: none;
+      }
+      .section.active {
+        display: block;
+      }
+
+      /* ── PAGE TITLE ── */
+      .page-title {
+        font-family: "Rajdhani", sans-serif;
+        font-size: 1.6rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .page-title::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(to right, var(--border), transparent);
+      }
+
+      /* ── STAT CARDS ── */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      .stat-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1.2rem;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.2s;
+      }
+      .stat-card:hover {
+        border-color: var(--accent);
+      }
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+      }
+      .stat-card.blue::before {
+        background: var(--accent);
+      }
+      .stat-card.red::before {
+        background: var(--accent2);
+      }
+      .stat-card.green::before {
+        background: var(--accent3);
+      }
+      .stat-card.yellow::before {
+        background: var(--accent4);
+      }
+      .stat-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-dim);
+        margin-bottom: 0.5rem;
+      }
+      .stat-value {
+        font-family: "Share Tech Mono", monospace;
+        font-size: 2rem;
+        font-weight: 700;
+      }
+      .stat-card.blue .stat-value {
+        color: var(--accent);
+      }
+      .stat-card.red .stat-value {
+        color: var(--accent2);
+      }
+      .stat-card.green .stat-value {
+        color: var(--accent3);
+      }
+      .stat-card.yellow .stat-value {
+        color: var(--accent4);
+      }
+      .stat-sub {
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        margin-top: 4px;
+      }
+
+      /* ── PANEL ── */
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+      }
+      .panel-title {
+        font-family: "Rajdhani", sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+        margin-bottom: 1rem;
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .panel-title .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: var(--glow);
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+      }
+
+      /* ── FORM ── */
+      .form-group {
+        margin-bottom: 0.9rem;
+      }
+      label {
+        display: block;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-dim);
+        margin-bottom: 0.3rem;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 0.55rem 0.75rem;
+        color: var(--text);
+        font-family: "Exo 2", sans-serif;
+        font-size: 0.85rem;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+        outline: none;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.1);
+      }
+      select option {
+        background: #0a1628;
+      }
+      textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+
+      /* ── BUTTONS ── */
+      .btn {
+        padding: 0.6rem 1.4rem;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+        font-family: "Rajdhani", sans-serif;
+        font-weight: 600;
+        font-size: 0.9rem;
+        letter-spacing: 1px;
+        transition: all 0.2s;
+        text-transform: uppercase;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: #050d1a;
+      }
+      .btn-primary:hover {
+        background: #33eaff;
+        box-shadow: var(--glow);
+      }
+      .btn-danger {
+        background: var(--accent2);
+        color: white;
+      }
+      .btn-danger:hover {
+        box-shadow: var(--glow-red);
+      }
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text-dim);
+      }
+      .btn-ghost:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      /* ── RESULT BOX ── */
+      .result-box {
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 1rem;
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.78rem;
+        line-height: 1.7;
+        color: var(--accent3);
+        min-height: 80px;
+        max-height: 480px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        margin-top: 1rem;
+      }
+      .result-box.error {
+        color: var(--accent2);
+      }
+
+      /* ── ALERT STRIP ── */
+      .alert {
+        padding: 0.65rem 1rem;
+        border-radius: 4px;
+        margin-bottom: 0.7rem;
+        font-size: 0.82rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        animation: fadeIn 0.3s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-4px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .alert-critical {
+        background: rgba(255, 75, 75, 0.1);
+        border: 1px solid rgba(255, 75, 75, 0.3);
+        color: var(--accent2);
+      }
+      .alert-success {
+        background: rgba(0, 255, 157, 0.08);
+        border: 1px solid rgba(0, 255, 157, 0.25);
+        color: var(--accent3);
+      }
+      .alert-info {
+        background: rgba(0, 229, 255, 0.08);
+        border: 1px solid rgba(0, 229, 255, 0.2);
+        color: var(--accent);
+      }
+
+      /* ── TABLE ── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.82rem;
+      }
+      th {
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-dim);
+        padding: 0.6rem 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+      }
+      td {
+        padding: 0.65rem 0.75rem;
+        border-bottom: 1px solid rgba(13, 37, 64, 0.5);
+      }
+      tr:hover td {
+        background: rgba(0, 229, 255, 0.03);
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        font-family: "Share Tech Mono", monospace;
+      }
+      .badge-critical {
+        background: rgba(255, 75, 75, 0.15);
+        color: var(--accent2);
+      }
+      .badge-high {
+        background: rgba(255, 183, 0, 0.15);
+        color: var(--accent4);
+      }
+      .badge-moderate {
+        background: rgba(0, 229, 255, 0.12);
+        color: var(--accent);
+      }
+      .badge-ok {
+        background: rgba(0, 255, 157, 0.12);
+        color: var(--accent3);
+      }
+
+      /* ── RANGE ── */
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        height: 4px;
+        background: var(--border);
+        border-radius: 2px;
+        padding: 0;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--accent);
+        cursor: pointer;
+        box-shadow: var(--glow);
+      }
+
+      /* ── NLP terminal ── */
+      .terminal {
+        background: rgba(0, 0, 0, 0.6);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 1rem;
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.78rem;
+        min-height: 160px;
+        max-height: 260px;
+        overflow-y: auto;
+        margin-bottom: 0.75rem;
+      }
+      .terminal-line {
+        margin-bottom: 4px;
+      }
+      .terminal-line.input {
+        color: var(--accent);
+      }
+      .terminal-line.output {
+        color: var(--accent3);
+      }
+      .terminal-line.error {
+        color: var(--accent2);
+      }
+      .terminal-input-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .terminal-prompt {
+        font-family: "Share Tech Mono", monospace;
+        color: var(--accent);
+        font-size: 0.82rem;
+        white-space: nowrap;
+      }
+
+      /* ── SCROLLBAR ── */
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 2px;
+      }
+
+      /* ── LOADING ── */
+      .loading {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border: 2px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        margin-left: 6px;
+        vertical-align: middle;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ── SLIDER LABEL ── */
+      .slider-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .slider-val {
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.8rem;
+        color: var(--accent);
+        min-width: 36px;
+        text-align: right;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- LOGIN SCREEN -->
+    <div
+      id="login-screen"
+      style="
+        position: fixed;
+        inset: 0;
+        background: #050d1a;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <div
+        style="
+          background: #080f1f;
+          border: 1px solid #0d2540;
+          border-radius: 12px;
+          padding: 2.5rem;
+          width: 100%;
+          max-width: 400px;
+        "
+      >
+        <div style="text-align: center; margin-bottom: 2rem">
+          <div
+            style="
+              width: 52px;
+              height: 52px;
+              border: 2px solid #00e5ff;
+              border-radius: 8px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-family: &quot;Share Tech Mono&quot;, monospace;
+              font-size: 15px;
+              color: #00e5ff;
+              margin: 0 auto 1rem;
+              box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
+            "
+          >
+            IA
+          </div>
+          <div
+            style="
+              font-family: &quot;Rajdhani&quot;, sans-serif;
+              font-size: 1.5rem;
+              font-weight: 700;
+              letter-spacing: 2px;
+              color: #c8daf0;
+            "
+          >
+            <span style="color: #00e5ff">IARMS</span> SYSTEM
+          </div>
+          <div
+            style="
+              font-size: 0.75rem;
+              color: #4a6080;
+              margin-top: 4px;
+              font-family: &quot;Share Tech Mono&quot;, monospace;
+              letter-spacing: 1px;
+            "
+          >
+            AUTHORISED ACCESS ONLY
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1rem">
+          <label
+            style="
+              display: block;
+              font-size: 0.7rem;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              color: #4a6080;
+              margin-bottom: 0.3rem;
+            "
+            >Username</label
+          >
+          <input
+            type="text"
+            id="login-username"
+            placeholder="Enter username"
+            style="
+              width: 100%;
+              background: rgba(0, 0, 0, 0.4);
+              border: 1px solid #0d2540;
+              border-radius: 4px;
+              padding: 0.65rem 0.75rem;
+              color: #c8daf0;
+              font-family: &quot;Exo 2&quot;, sans-serif;
+              font-size: 0.85rem;
+              outline: none;
+              box-sizing: border-box;
+            "
+            onkeydown="if (event.key === 'Enter') loginUser();"
+          />
+        </div>
+
+        <div style="margin-bottom: 1.5rem">
+          <label
+            style="
+              display: block;
+              font-size: 0.7rem;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              color: #4a6080;
+              margin-bottom: 0.3rem;
+            "
+            >Password</label
+          >
+          <div style="position: relative">
+            <input
+              type="password"
+              id="login-password"
+              placeholder="Enter password"
+              style="
+                width: 100%;
+                background: rgba(0, 0, 0, 0.4);
+                border: 1px solid #0d2540;
+                border-radius: 4px;
+                padding: 0.65rem 2.5rem 0.65rem 0.75rem;
+                color: #c8daf0;
+                font-family: &quot;Exo 2&quot;, sans-serif;
+                font-size: 0.85rem;
+                outline: none;
+                box-sizing: border-box;
+              "
+              onkeydown="if (event.key === 'Enter') loginUser();"
+            />
+            <span
+              onclick="togglePassword()"
+              id="toggle-eye"
+              style="
+                position: absolute;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                cursor: pointer;
+                color: #4a6080;
+                font-size: 0.85rem;
+                user-select: none;
+                transition: color 0.2s;
+              "
+              onmouseover="this.style.color = '#00e5ff'"
+              onmouseout="this.style.color = '#4a6080'"
+              >👁</span
+            >
+          </div>
+        </div>
+
+        <button
+          onclick="loginUser()"
+          style="
+            width: 100%;
+            padding: 0.75rem;
+            background: #00e5ff;
+            color: #050d1a;
+            border: none;
+            border-radius: 4px;
+            font-family: &quot;Rajdhani&quot;, sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+          "
+          onmouseover="this.style.background = '#33eaff'"
+          onmouseout="this.style.background = '#00e5ff'"
+        >
+          LOGIN
+        </button>
+
+        <div
+          id="login-error"
+          style="
+            margin-top: 1rem;
+            color: #ff4b4b;
+            font-size: 0.8rem;
+            font-family: &quot;Share Tech Mono&quot;, monospace;
+            text-align: center;
+            display: none;
+          "
+        ></div>
+
+        <div
+          style="
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #0d2540;
+            font-size: 0.72rem;
+            color: #4a6080;
+            font-family: &quot;Share Tech Mono&quot;, monospace;
+            text-align: center;
+          "
+        >
+          No account? Register via the SRR panel after login.<br />
+          Default: admin_user / SecurePass123
+        </div>
+      </div>
+    </div>
+
+    <!-- HEADER -->
+    <header>
+      <div class="logo">
+        <div class="logo-icon">IA</div>
+        <div class="logo-text"><span>IARMS</span> SYSTEM</div>
+      </div>
+      <div class="header-right">
+        <div class="status-badge">
+          <div class="status-dot"></div>
+          SYSTEM ONLINE
+        </div>
+        <div
+          id="logged-in-user"
+          style="
+            font-family: &quot;Share Tech Mono&quot;, monospace;
+            font-size: 11px;
+            color: #00ff9d;
+            display: none;
+          "
+        ></div>
+        <div class="header-time" id="clock">--:--:--</div>
+        <button
+          onclick="logoutUser()"
+          style="
+            background: transparent;
+            border: 1px solid #0d2540;
+            border-radius: 4px;
+            color: #4a6080;
+            font-family: &quot;Rajdhani&quot;, sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            padding: 4px 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+          "
+          onmouseover="
+            this.style.borderColor = '#ff4b4b';
+            this.style.color = '#ff4b4b';
+          "
+          onmouseout="
+            this.style.borderColor = '#0d2540';
+            this.style.color = '#4a6080';
+          "
+        >
+          LOGOUT
+        </button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- SIDEBAR -->
+      <aside>
+        <div class="nav-section">
+          <div class="nav-label">Overview</div>
+          <div class="nav-item active" onclick="showSection('dashboard', this)">
+            <span class="nav-icon">⬡</span> Dashboard
+          </div>
+          <div class="nav-item" onclick="showSection('analyse', this)">
+            <span class="nav-icon">⬡</span> Full Analysis
+          </div>
+          <div class="nav-item" onclick="showSection('history', this)">
+            <span class="nav-icon">⬡</span> Reports History
+          </div>
+        </div>
+        <div class="nav-section">
+          <div class="nav-label">Subsystems</div>
+          <div class="nav-item" onclick="showSection('cce', this)">
+            <span class="nav-icon">◈</span> CCE
+          </div>
+          <div class="nav-item" onclick="showSection('kau', this)">
+            <span class="nav-icon">◈</span> KAU
+          </div>
+          <div class="nav-item" onclick="showSection('cru', this)">
+            <span class="nav-icon">◈</span> CRU
+          </div>
+          <div class="nav-item" onclick="showSection('idru', this)">
+            <span class="nav-icon">◈</span> IDRU
+          </div>
+          <div class="nav-item" onclick="showSection('ceu', this)">
+            <span class="nav-icon">◈</span> CEU
+          </div>
+          <div class="nav-item" onclick="showSection('srr', this)">
+            <span class="nav-icon">◈</span> SRR
+          </div>
+          <div class="nav-item" onclick="showSection('rnn', this)">
+            <span class="nav-icon">◈</span> RNN
+          </div>
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <main>
+        <!-- ── DASHBOARD ── -->
+        <div class="section active" id="sec-dashboard">
+          <div class="page-title">⬡ SYSTEM OVERVIEW</div>
+
+          <div class="stats-grid">
+            <div class="stat-card blue">
+              <div class="stat-label">Active Subsystems</div>
+              <div class="stat-value">6</div>
+              <div class="stat-sub">All operational</div>
+            </div>
+            <div class="stat-card red">
+              <div class="stat-label">Alert Level</div>
+              <div class="stat-value" id="dash-alert">—</div>
+              <div class="stat-sub">Run CRU to update</div>
+            </div>
+            <div class="stat-card green">
+              <div class="stat-label">Resources Tracked</div>
+              <div class="stat-value" id="dash-resources">0</div>
+              <div class="stat-sub">Via IDRU</div>
+            </div>
+            <div class="stat-card yellow">
+              <div class="stat-label">Stakeholders</div>
+              <div class="stat-value" id="dash-stakeholders">0</div>
+              <div class="stat-sub">Via CEU</div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-bottom: 1rem">
+            <div class="panel-title">
+              <span class="dot"></span>AI MODEL STATUS
+            </div>
+            <div
+              id="model-status-content"
+              style="
+                font-family: &quot;Share Tech Mono&quot;, monospace;
+                font-size: 0.78rem;
+                color: var(--text-dim);
+              "
+            >
+              <button
+                class="btn btn-ghost"
+                onclick="loadModelStatus()"
+                style="margin-bottom: 0.75rem"
+              >
+                ↻ CHECK MODEL STATUS
+              </button>
+              <div id="model-status-display">
+                Click to check AI model status
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>OUTBREAK TREND VISUALIZATION
+              </div>
+              <div
+                id="dash-chart-empty"
+                style="
+                  text-align: center;
+                  padding: 2rem 1rem;
+                  color: var(--text-dim);
+                  font-family: &quot;Share Tech Mono&quot;, monospace;
+                  font-size: 0.78rem;
+                "
+              >
+                Run a trend analysis from the RNN section to display the chart
+                here.
+              </div>
+              <canvas
+                id="dash-trend-chart"
+                style="display: none; width: 100%; max-height: 280px"
+              ></canvas>
+              <div
+                id="dash-chart-meta"
+                style="
+                  display: none;
+                  margin-top: 0.75rem;
+                  font-family: &quot;Share Tech Mono&quot;, monospace;
+                  font-size: 0.75rem;
+                  color: var(--text-dim);
+                "
+              ></div>
+            </div>
+            <div class="panel" style="margin-bottom: 1rem">
+              <div class="panel-title">
+                <span class="dot"></span>ACCESS SUMMARY
+              </div>
+              <div
+                id="access-summary"
+                style="
+                  font-family: &quot;Share Tech Mono&quot;, monospace;
+                  font-size: 0.78rem;
+                  color: var(--text-dim);
+                "
+              >
+                Login to see your access level
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>RECENT ACTIVITY
+              </div>
+              <div id="activity-log">
+                <div class="alert alert-info">
+                  ℹ System initialised — all subsystems loaded
+                </div>
+                <div class="alert alert-success">
+                  ✓ API server running on port 8000
+                </div>
+                <div class="alert alert-info">
+                  ℹ Awaiting outbreak data input
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── CCE ── -->
+        <div class="section" id="sec-cce">
+          <div class="page-title">◈ COORDINATION & CONTROL ENGINE</div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>OUTBREAK STATE INPUT
+              </div>
+              <div class="form-group">
+                <label>Confirmed Cases</label>
+                <div class="slider-row">
+                  <input
+                    type="range"
+                    min="0"
+                    max="1000"
+                    value="150"
+                    id="cce-cases"
+                    oninput="
+                      document.getElementById('v-cases').textContent =
+                        this.value
+                    "
+                  />
+                  <span class="slider-val" id="v-cases">150</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Deaths</label>
+                <div class="slider-row">
+                  <input
+                    type="range"
+                    min="0"
+                    max="200"
+                    value="12"
+                    id="cce-deaths"
+                    oninput="
+                      document.getElementById('v-deaths').textContent =
+                        this.value
+                    "
+                  />
+                  <span class="slider-val" id="v-deaths">12</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Region Risk (0–1)</label>
+                <div class="slider-row">
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    value="8"
+                    id="cce-risk"
+                    oninput="
+                      document.getElementById('v-risk').textContent = (
+                        this.value / 10
+                      ).toFixed(1)
+                    "
+                  />
+                  <span class="slider-val" id="v-risk">0.8</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Supply Level (0–1)</label>
+                <div class="slider-row">
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    value="3"
+                    id="cce-supply"
+                    oninput="
+                      document.getElementById('v-supply').textContent = (
+                        this.value / 10
+                      ).toFixed(1)
+                    "
+                  />
+                  <span class="slider-val" id="v-supply">0.3</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Days Since Outbreak</label>
+                <div class="slider-row">
+                  <input
+                    type="range"
+                    min="1"
+                    max="90"
+                    value="7"
+                    id="cce-days"
+                    oninput="
+                      document.getElementById('v-days').textContent = this.value
+                    "
+                  />
+                  <span class="slider-val" id="v-days">7</span>
+                </div>
+              </div>
+              <button class="btn btn-primary" onclick="runCCE()">
+                ▶ GET RECOMMENDATION
+              </button>
+            </div>
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>CCE RECOMMENDATION
+              </div>
+              <div class="result-box" id="cce-result">Awaiting input...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── KAU ── -->
+        <div class="section" id="sec-kau">
+          <div class="page-title">◈ KNOWLEDGE-BASED ADVISORY UNIT</div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>SCENARIO INPUT
+              </div>
+              <div class="form-group">
+                <label>Risk Score (0–1)</label>
+                <div class="slider-row">
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    value="7"
+                    id="kau-risk"
+                    oninput="
+                      document.getElementById('kv-risk').textContent = (
+                        this.value / 10
+                      ).toFixed(1)
+                    "
+                  />
+                  <span class="slider-val" id="kv-risk">0.7</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Resource Level (0–1)</label>
+                <div class="slider-row">
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    value="3"
+                    id="kau-resource"
+                    oninput="
+                      document.getElementById('kv-res').textContent = (
+                        this.value / 10
+                      ).toFixed(1)
+                    "
+                  />
+                  <span class="slider-val" id="kv-res">0.3</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Days Active</label>
+                <input type="number" id="kau-days" value="18" min="1" />
+              </div>
+              <div class="form-group">
+                <label>Total Cases</label>
+                <input type="number" id="kau-cases" value="320" min="0" />
+              </div>
+              <div class="form-group">
+                <label>Total Deaths</label>
+                <input type="number" id="kau-deaths" value="25" min="0" />
+              </div>
+              <button class="btn btn-primary" onclick="runKAU()">
+                ▶ GENERATE ADVISORY
+              </button>
+            </div>
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>ADVISORY REPORT
+              </div>
+              <div class="result-box" id="kau-result">Awaiting input...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── CRU ── -->
+        <div class="section" id="sec-cru">
+          <div class="page-title">◈ COMMUNICATION & RESPONSE UNIT</div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>OUTBREAK DATA
+              </div>
+              <div class="form-group">
+                <label>Disease Name</label>
+                <input type="text" id="cru-disease" value="Mpox" />
+              </div>
+              <div class="form-group">
+                <label>Affected Region</label>
+                <input type="text" id="cru-region" value="North Central Zone" />
+              </div>
+              <div class="form-group">
+                <label>Total Cases</label>
+                <input type="number" id="cru-cases" value="320" />
+              </div>
+              <div class="form-group">
+                <label>Total Deaths</label>
+                <input type="number" id="cru-deaths" value="28" />
+              </div>
+              <div class="form-group">
+                <label>Fatality Rate (0–1)</label>
+                <div class="slider-row">
+                  <input
+                    type="range"
+                    min="0"
+                    max="20"
+                    value="8"
+                    id="cru-fatality"
+                    oninput="
+                      document.getElementById('cv-fat').textContent = (
+                        this.value / 100
+                      ).toFixed(3)
+                    "
+                  />
+                  <span class="slider-val" id="cv-fat">0.080</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Spread Rate (0–1)</label>
+                <div class="slider-row">
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    value="6"
+                    id="cru-spread"
+                    oninput="
+                      document.getElementById('cv-spr').textContent = (
+                        this.value / 10
+                      ).toFixed(1)
+                    "
+                  />
+                  <span class="slider-val" id="cv-spr">0.6</span>
+                </div>
+              </div>
+              <button class="btn btn-primary" onclick="runCRU()">
+                ▶ GENERATE RESPONSE
+              </button>
+            </div>
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>RESPONSE REPORT
+              </div>
+              <div class="result-box" id="cru-result">Awaiting input...</div>
+            </div>
+
+            <!-- Hierarchy panel appears after CRU runs -->
+            <div class="panel" id="cru-hierarchy-panel" style="display: none">
+              <div class="panel-title">
+                <span class="dot"></span>COORDINATION HIERARCHY
+              </div>
+              <div id="cru-hierarchy-display"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── IDRU ── -->
+        <div class="section" id="sec-idru">
+          <div class="page-title">
+            ◈ INTELLIGENT DISTRIBUTION & TRACKING UNIT
+          </div>
+          <div class="grid-3">
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>REGISTER REGION
+              </div>
+              <div class="form-group">
+                <label>Region ID</label
+                ><input type="text" id="idru-rid" value="R001" />
+              </div>
+              <div class="form-group">
+                <label>Region Name</label
+                ><input
+                  type="text"
+                  id="idru-rname"
+                  value="North Central Zone"
+                />
+              </div>
+              <div class="form-group">
+                <label>Population</label
+                ><input type="number" id="idru-pop" value="500000" />
+              </div>
+              <div class="form-group">
+                <label>Risk Score (0–1)</label>
+                <div class="slider-row">
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    value="8"
+                    id="idru-risk"
+                    oninput="
+                      document.getElementById('iv-risk').textContent = (
+                        this.value / 10
+                      ).toFixed(1)
+                    "
+                  />
+                  <span class="slider-val" id="iv-risk">0.8</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Current Cases</label
+                ><input type="number" id="idru-cases" value="320" />
+              </div>
+              <button class="btn btn-primary" onclick="registerRegion()">
+                + REGISTER REGION
+              </button>
+              <div
+                class="result-box"
+                id="idru-reg-result"
+                style="min-height: 40px; margin-top: 0.75rem"
+              >
+                —
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>ADD RESOURCE
+              </div>
+              <div class="form-group">
+                <label>Resource Type</label>
+                <select id="idru-rtype">
+                  <option>Testing Kits</option>
+                  <option>Personal Protective Equipment</option>
+                  <option>Vaccines</option>
+                  <option>Antiviral Medications</option>
+                  <option>Oxygen Supplies</option>
+                  <option>Medical Personnel</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Quantity</label
+                ><input type="number" id="idru-qty" value="1000" />
+              </div>
+              <div class="form-group">
+                <label>Source</label
+                ><input
+                  type="text"
+                  id="idru-source"
+                  value="Federal Ministry of Health"
+                />
+              </div>
+              <button class="btn btn-primary" onclick="addResource()">
+                + ADD RESOURCE
+              </button>
+              <div
+                class="result-box"
+                id="idru-add-result"
+                style="min-height: 40px; margin-top: 0.75rem"
+              >
+                —
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>TRACKING REPORT
+              </div>
+              <button
+                class="btn btn-ghost"
+                onclick="getTracking()"
+                style="margin-bottom: 0.75rem"
+              >
+                ↻ REFRESH REPORT
+              </button>
+              <div
+                class="result-box"
+                id="idru-track-result"
+                style="min-height: 120px"
+              >
+                Click refresh to load...
+              </div>
+            </div>
+          </div>
+
+          <!-- Resource Visual Board -->
+          <div class="panel" style="margin-top: 1rem">
+            <div
+              class="panel-title"
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+              "
+            >
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span class="dot"></span>RESOURCE MONITORING BOARD
+              </div>
+              <button
+                class="btn btn-ghost"
+                onclick="loadVisualBoard()"
+                style="padding: 2px 14px; font-size: 0.78rem"
+              >
+                ↻ REFRESH BOARD
+              </button>
+            </div>
+            <div id="visual-board-content">
+              <div
+                style="
+                  text-align: center;
+                  padding: 2rem;
+                  color: var(--text-dim);
+                  font-family: &quot;Share Tech Mono&quot;, monospace;
+                  font-size: 0.78rem;
+                "
+              >
+                Register regions and add resources, then click Refresh Board to
+                view.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── CEU ── -->
+        <div class="section" id="sec-ceu">
+          <div class="page-title">◈ COLLABORATION & ENGAGEMENT UNIT</div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>REGISTER STAKEHOLDER
+              </div>
+              <div class="form-group">
+                <label>Name</label
+                ><input
+                  type="text"
+                  id="ceu-name"
+                  value="Federal Ministry of Health"
+                />
+              </div>
+              <div class="form-group">
+                <label>Type</label>
+                <select id="ceu-type">
+                  <option>Government Agency</option>
+                  <option>Healthcare Facility</option>
+                  <option>Community Organisation</option>
+                  <option>International Partner</option>
+                  <option>Research Institution</option>
+                  <option>Non-Governmental Organisation</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Region</label
+                ><input type="text" id="ceu-region" value="National" />
+              </div>
+              <div class="form-group">
+                <label>Contact</label
+                ><input
+                  type="text"
+                  id="ceu-contact"
+                  value="contact@health.gov.ng"
+                />
+              </div>
+              <button class="btn btn-primary" onclick="registerStakeholder()">
+                + REGISTER
+              </button>
+              <div
+                class="result-box"
+                id="ceu-reg-result"
+                style="min-height: 40px; margin-top: 0.75rem"
+              >
+                —
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>ENGAGEMENT SUMMARY
+              </div>
+              <button
+                class="btn btn-ghost"
+                onclick="getEngagement()"
+                style="margin-bottom: 0.75rem"
+              >
+                ↻ LOAD SUMMARY
+              </button>
+              <div
+                class="result-box"
+                id="ceu-summary-result"
+                style="min-height: 120px"
+              >
+                Click load to refresh...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SRR ── -->
+        <div class="section" id="sec-srr">
+          <div class="page-title">◈ SECURED RESOURCE REPOSITORY</div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>AUTHENTICATION
+              </div>
+              <div class="form-group">
+                <label>Username</label
+                ><input type="text" id="srr-user" value="admin_user" />
+              </div>
+              <div class="form-group">
+                <label>Password</label
+                ><input type="password" id="srr-pass" value="SecurePass123" />
+              </div>
+              <div
+                id="srr-role-badge"
+                style="
+                  margin-bottom: 0.75rem;
+                  padding: 0.5rem 0.75rem;
+                  background: rgba(0, 229, 255, 0.06);
+                  border: 1px solid rgba(0, 229, 255, 0.15);
+                  border-radius: 4px;
+                  font-family: &quot;Share Tech Mono&quot;, monospace;
+                  font-size: 0.75rem;
+                  color: #00e5ff;
+                  display: none;
+                "
+              ></div>
+              <div style="display: flex; gap: 8px">
+                <button class="btn btn-primary" onclick="srrRegister()">
+                  REGISTER
+                </button>
+                <button class="btn btn-ghost" onclick="srrLogin()">
+                  LOGIN
+                </button>
+              </div>
+              <div
+                class="result-box"
+                id="srr-auth-result"
+                style="min-height: 50px; margin-top: 0.75rem"
+              >
+                —
+              </div>
+              <div class="form-group" style="margin-top: 0.75rem">
+                <label>Role</label>
+                <select id="srr-role">
+                  <option value="admin">Admin</option>
+                  <option value="officer">Officer</option>
+                  <option value="analyst">Analyst</option>
+                  <option value="viewer">Viewer</option>
+                </select>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>NLP COMMAND TERMINAL
+              </div>
+              <div class="terminal" id="srr-terminal">
+                <div class="terminal-line output">
+                  // IARMS Secured Resource Repository
+                </div>
+                <div class="terminal-line output">
+                  // Login first, then type commands below
+                </div>
+                <div class="terminal-line output">
+                  // Type 'help' to see available commands
+                </div>
+                <div class="terminal-line output">
+                  // For remote consultation, type: consult [topic]
+                </div>
+                <div class="terminal-line output">
+                  // e.g. "how do i set up an isolation centre"
+                </div>
+                <div class="terminal-line output">
+                  // e.g. "what should i do for cholera outbreak"
+                </div>
+              </div>
+              <div class="terminal-input-row">
+                <span class="terminal-prompt">SRR &gt;</span>
+                <input
+                  type="text"
+                  id="srr-cmd"
+                  placeholder="Type command..."
+                  style="flex: 1"
+                  onkeydown="if (event.key === 'Enter') sendNLP();"
+                />
+                <button class="btn btn-primary" onclick="sendNLP()">
+                  SEND
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── FULL ANALYSIS ── -->
+        <div class="section" id="sec-analyse">
+          <div class="page-title">⬡ FULL OUTBREAK ANALYSIS</div>
+          <div class="alert alert-info">
+            ℹ This runs all 6 subsystems automatically in sequence and returns
+            one unified report
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>OUTBREAK INPUT
+              </div>
+              <div class="form-group">
+                <label>Disease Name</label>
+                <input type="text" id="fa-disease" value="Mpox" />
+              </div>
+              <div class="form-group">
+                <label>Affected Region</label>
+                <input type="text" id="fa-region" value="North Central Zone" />
+              </div>
+              <div class="grid-2">
+                <div class="form-group">
+                  <label>Total Cases</label>
+                  <input type="number" id="fa-cases" value="320" />
+                </div>
+                <div class="form-group">
+                  <label>Total Deaths</label>
+                  <input type="number" id="fa-deaths" value="28" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Fatality Rate (0–1)</label>
+                <div class="slider-row">
+                  <input
+                    type="range"
+                    min="0"
+                    max="20"
+                    value="8"
+                    id="fa-fatality"
+                    oninput="
+                      document.getElementById('fv-fat').textContent = (
+                        this.value / 100
+                      ).toFixed(3)
+                    "
+                  />
+                  <span class="slider-val" id="fv-fat">0.080</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Spread Rate (0–1)</label>
+                <div class="slider-row">
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    value="6"
+                    id="fa-spread"
+                    oninput="
+                      document.getElementById('fv-spr').textContent = (
+                        this.value / 10
+                      ).toFixed(1)
+                    "
+                  />
+                  <span class="slider-val" id="fv-spr">0.6</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Risk Score (0–1)</label>
+                <div class="slider-row">
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    value="7"
+                    id="fa-risk"
+                    oninput="
+                      document.getElementById('fv-risk').textContent = (
+                        this.value / 10
+                      ).toFixed(1)
+                    "
+                  />
+                  <span class="slider-val" id="fv-risk">0.7</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Resource Level (0–1)</label>
+                <div class="slider-row">
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    value="3"
+                    id="fa-resource"
+                    oninput="
+                      document.getElementById('fv-res').textContent = (
+                        this.value / 10
+                      ).toFixed(1)
+                    "
+                  />
+                  <span class="slider-val" id="fv-res">0.3</span>
+                </div>
+              </div>
+              <div class="grid-2">
+                <div class="form-group">
+                  <label>Days Active</label>
+                  <input type="number" id="fa-days" value="18" />
+                </div>
+                <div class="form-group">
+                  <label>Population</label>
+                  <input type="number" id="fa-population" value="500000" />
+                </div>
+              </div>
+              <div
+                style="
+                  margin-top: 0.75rem;
+                  padding-top: 0.75rem;
+                  border-top: 1px solid var(--border);
+                "
+              >
+                <div
+                  class="panel-title"
+                  style="margin-bottom: 0.75rem; font-size: 0.85rem"
+                >
+                  <span class="dot"></span>NEIGHBOURING REGIONS (Optional)
+                </div>
+                <div
+                  class="alert alert-info"
+                  style="margin-bottom: 0.75rem; font-size: 0.75rem"
+                >
+                  ℹ Add neighbouring region data to enable geographic movement
+                  pattern analysis.
+                </div>
+
+                <div class="form-group">
+                  <label>Region 2 Name</label>
+                  <input
+                    type="text"
+                    id="fa-region2"
+                    placeholder="e.g. South West Zone"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>Region 2 Daily Cases (comma separated)</label>
+                  <input
+                    type="text"
+                    id="fa-cases2"
+                    placeholder="e.g. 5, 12, 30, 75"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label>Region 3 Name</label>
+                  <input
+                    type="text"
+                    id="fa-region3"
+                    placeholder="e.g. North East Zone"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>Region 3 Daily Cases (comma separated)</label>
+                  <input
+                    type="text"
+                    id="fa-cases3"
+                    placeholder="e.g. 2, 5, 10, 22"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label>Region 4 Name</label>
+                  <input
+                    type="text"
+                    id="fa-region4"
+                    placeholder="e.g. South South Zone"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>Region 4 Daily Cases (comma separated)</label>
+                  <input
+                    type="text"
+                    id="fa-cases4"
+                    placeholder="e.g. 1, 3, 7, 15"
+                  />
+                </div>
+              </div>
+              <button
+                class="btn btn-primary"
+                style="width: 100%; margin-top: 0.5rem"
+                onclick="runFullAnalysis()"
+              >
+                RUN FULL OUTBREAK ANALYSIS
+              </button>
+            </div>
+            <div class="panel">
+              <div
+                class="panel-title"
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                "
+              >
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <span class="dot"></span>UNIFIED REPORT
+                </div>
+                <button
+                  class="btn btn-ghost"
+                  id="fa-export-btn"
+                  onclick=""
+                  style="
+                    padding: 2px 14px;
+                    font-size: 0.78rem;
+                    border-color: #00ff9d;
+                    color: #00ff9d;
+                    display: none;
+                  "
+                  onmouseover="this.style.background = 'rgba(0,255,157,0.1)'"
+                  onmouseout="this.style.background = 'transparent'"
+                >
+                  ⬇ EXPORT PDF
+                </button>
+              </div>
+              <div id="fa-pipeline" style="margin-bottom: 1rem"></div>
+              <div class="result-box" id="fa-result" style="min-height: 300px">
+                Awaiting analysis...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── REPORTS HISTORY ── -->
+        <div class="section" id="sec-history">
+          <div class="page-title">⬡ REPORTS HISTORY</div>
+          <div class="alert alert-info">
+            ℹ All outbreak reports generated by the Full Analysis are stored
+            here permanently.
+          </div>
+          <div class="panel">
+            <div class="panel-title">
+              <span class="dot"></span>SAVED REPORTS
+            </div>
+            <button
+              class="btn btn-ghost"
+              onclick="loadHistory()"
+              style="margin-bottom: 1rem"
+            >
+              ↻ REFRESH
+            </button>
+            <div id="history-list"></div>
+          </div>
+          <div class="panel" id="history-detail-panel" style="display: none">
+            <div
+              class="panel-title"
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+              "
+            >
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span class="dot"></span>REPORT DETAIL
+              </div>
+              <div style="display: flex; gap: 8px">
+                <button
+                  class="btn btn-ghost"
+                  id="detail-export-btn"
+                  onclick=""
+                  style="
+                    padding: 2px 14px;
+                    font-size: 0.78rem;
+                    border-color: #00ff9d;
+                    color: #00ff9d;
+                    display: none;
+                  "
+                  onmouseover="this.style.background = 'rgba(0,255,157,0.1)'"
+                  onmouseout="this.style.background = 'transparent'"
+                >
+                  ⬇ EXPORT PDF
+                </button>
+                <button
+                  class="btn btn-ghost"
+                  onclick="closeReport()"
+                  style="
+                    padding: 2px 14px;
+                    font-size: 0.78rem;
+                    border-color: #ff4b4b;
+                    color: #ff4b4b;
+                  "
+                  onmouseover="this.style.background = 'rgba(255,75,75,0.1)'"
+                  onmouseout="this.style.background = 'transparent'"
+                >
+                  ✕ CLOSE
+                </button>
+              </div>
+            </div>
+            <div
+              class="result-box"
+              id="history-detail"
+              style="min-height: 300px"
+            >
+              Select a report to view
+            </div>
+          </div>
+        </div>
+
+        <!-- ── RNN ── -->
+        <div class="section" id="sec-rnn">
+          <div class="page-title">◈ OUTBREAK TREND PREDICTOR</div>
+          <div class="alert alert-info">
+            ℹ Enter daily case counts separated by commas to analyse the
+            outbreak trend and predict future cases.
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>CASE HISTORY INPUT
+              </div>
+              <div class="form-group">
+                <label>Daily Case Counts (comma separated)</label>
+                <textarea
+                  id="rnn-history"
+                  rows="4"
+                  placeholder="e.g. 10, 25, 60, 140, 310, 650, 1200"
+                ></textarea>
+              </div>
+              <div class="form-group">
+                <label>Days to Predict Ahead</label>
+                <div class="slider-row">
+                  <input
+                    type="range"
+                    min="1"
+                    max="14"
+                    value="3"
+                    id="rnn-days"
+                    oninput="
+                      document.getElementById('rnn-days-val').textContent =
+                        this.value
+                    "
+                  />
+                  <span class="slider-val" id="rnn-days-val">3</span>
+                </div>
+              </div>
+              <button
+                class="btn btn-primary"
+                style="width: 100%"
+                onclick="runRNN()"
+              >
+                ▶ ANALYSE TREND & PREDICT
+              </button>
+            </div>
+            <div class="panel">
+              <div class="panel-title">
+                <span class="dot"></span>TREND ANALYSIS REPORT
+              </div>
+              <div class="result-box" id="rnn-result" style="min-height: 200px">
+                Awaiting case history input...
+              </div>
+              <div
+                id="rnn-chart-container"
+                style="display: none; margin-top: 1rem"
+              >
+                <div class="panel-title" style="margin-top: 0.5rem">
+                  <span class="dot"></span>TREND VISUALIZATION
+                </div>
+                <canvas
+                  id="rnn-chart"
+                  style="width: 100%; max-height: 250px"
+                ></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      const API = "http://127.0.0.1:8000";
+      let srrToken = null;
+      let loggedInRole = null;
+
+      // ── LOGIN ──
+      async function loginUser() {
+        const username = document.getElementById("login-username").value.trim();
+        const password = document.getElementById("login-password").value.trim();
+        const errorEl = document.getElementById("login-error");
+
+        if (!username || !password) {
+          errorEl.textContent = "Please enter both username and password.";
+          errorEl.style.display = "block";
+          return;
+        }
+
+        try {
+          const r = await fetch(`${API}/srr/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
+          });
+
+          const d = await r.json();
+
+          if (d.session_token) {
+            srrToken = d.session_token;
+            loggedInRole = d.role;
+            document.getElementById("login-screen").style.display = "none";
+            applyRoleView(d.role);
+            logActivity(
+              `Logged in as ${username} [${d.role.toUpperCase()}]`,
+              "success",
+            );
+            document.getElementById("logged-in-user").textContent =
+              `${username} [${d.role.toUpperCase()}]`;
+            document.getElementById("logged-in-user").style.display = "block";
+          } else {
+            errorEl.textContent =
+              "Invalid username or password. Please try again.";
+            errorEl.style.display = "block";
+          }
+        } catch (e) {
+          errorEl.textContent =
+            "Unable to connect to server. Make sure the system is running.";
+          errorEl.style.display = "block";
+        }
+      }
+
+      function logoutUser() {
+        resetRoleView();
+        srrToken = null;
+        document.getElementById("login-username").value = "";
+        document.getElementById("login-password").value = "";
+        document.getElementById("login-error").style.display = "none";
+        document.getElementById("login-screen").style.display = "flex";
+        document.getElementById("logged-in-user").style.display = "none";
+        document.getElementById("logged-in-user").textContent = "";
+      }
+
+      function applyRoleView(role) {
+        // Define what each role can see
+        const roleAccess = {
+          admin: [
+            "dashboard",
+            "analyse",
+            "history",
+            "cce",
+            "kau",
+            "cru",
+            "idru",
+            "ceu",
+            "srr",
+            "rnn",
+          ],
+          officer: [
+            "dashboard",
+            "analyse",
+            "history",
+            "cce",
+            "kau",
+            "cru",
+            "rnn",
+          ],
+          analyst: ["dashboard", "history", "kau", "cru", "idru", "rnn"],
+          viewer: ["dashboard", "history"],
+        };
+
+        const allowed = roleAccess[role] || roleAccess["viewer"];
+
+        // Show or hide sidebar nav items based on role
+        document.querySelectorAll(".nav-item").forEach((item) => {
+          const onclick = item.getAttribute("onclick") || "";
+          const match = onclick.match(/showSection\('(\w+)'/);
+          if (match) {
+            const section = match[1];
+            if (allowed.includes(section)) {
+              item.style.display = "flex";
+            } else {
+              item.style.display = "none";
+            }
+          }
+        });
+
+        // Show role-specific welcome message on dashboard
+        const roleMessages = {
+          admin: {
+            text: "Full system access — all subsystems and controls available.",
+            color: "#00ff9d",
+          },
+          officer: {
+            text: "Surveillance Officer view — outbreak analysis and coordination tools available.",
+            color: "#00e5ff",
+          },
+          analyst: {
+            text: "Analyst view — advisory, response, distribution and trend analysis available.",
+            color: "#ffb700",
+          },
+          viewer: {
+            text: "Viewer access — reports history available in read-only mode.",
+            color: "#4a6080",
+          },
+        };
+
+        const msg = roleMessages[role] || roleMessages["viewer"];
+
+        // Add role banner to dashboard if not already there
+        const existing = document.getElementById("role-banner");
+        if (existing) existing.remove();
+
+        const banner = document.createElement("div");
+        banner.id = "role-banner";
+        banner.style.cssText = `
+          padding: 0.65rem 1rem;
+          border-radius: 4px;
+          margin-bottom: 1rem;
+          font-size: 0.82rem;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: rgba(0,0,0,0.3);
+          border: 1px solid ${msg.color}30;
+          color: ${msg.color};
+          font-family: 'Share Tech Mono', monospace;
+        `;
+        banner.textContent = `[${role.toUpperCase()}] ${msg.text}`;
+
+        const dashSection = document.getElementById("sec-dashboard");
+        const pageTitle = dashSection.querySelector(".page-title");
+        pageTitle.insertAdjacentElement("afterend", banner);
+
+        // If viewer — make all result boxes read-only visually
+        if (role === "viewer") {
+          document.querySelectorAll(".btn-primary").forEach((btn) => {
+            if (
+              !btn.onclick?.toString().includes("loadHistory") &&
+              !btn.onclick?.toString().includes("showSection")
+            ) {
+              btn.style.opacity = "0.4";
+              btn.style.pointerEvents = "none";
+              btn.title = "Read-only access";
+            }
+          });
+        }
+
+        // Update access summary panel
+        const accessSummary = document.getElementById("access-summary");
+        if (accessSummary) {
+          const subsystemAccess = {
+            admin: "CCE, KAU, CRU, IDRU, CEU, SRR, RNN — Full Access",
+            officer: "CCE, KAU, CRU, RNN — Surveillance & Coordination",
+            analyst: "KAU, CRU, IDRU, RNN — Analysis & Distribution",
+            viewer: "Reports History — Read Only",
+          };
+          accessSummary.innerHTML = `
+      <div style="margin-bottom:0.5rem">
+        <span style="color:var(--accent)">Role:</span>
+        <span style="color:${msg.color};margin-left:8px">
+          ${role.toUpperCase()}
+        </span>
+      </div>
+      <div style="margin-bottom:0.5rem">
+        <span style="color:var(--accent)">Access:</span>
+        <span style="margin-left:8px">
+          ${subsystemAccess[role] || "Reports only"}
+        </span>
+      </div>
+      <div>
+        <span style="color:var(--accent)">Sections:</span>
+        <span style="margin-left:8px">${allowed.length} of 11</span>
+      </div>
+    `;
+        }
+      }
+
+      function resetRoleView() {
+        // Show all nav items again on logout
+        document.querySelectorAll(".nav-item").forEach((item) => {
+          item.style.display = "flex";
+        });
+        // Remove role banner
+        const banner = document.getElementById("role-banner");
+        if (banner) banner.remove();
+        // Re-enable all buttons
+        document.querySelectorAll(".btn-primary").forEach((btn) => {
+          btn.style.opacity = "1";
+          btn.style.pointerEvents = "auto";
+          btn.title = "";
+        });
+        loggedInRole = null;
+      }
+
+      function togglePassword() {
+        const input = document.getElementById("login-password");
+        const eye = document.getElementById("toggle-eye");
+        if (input.type === "password") {
+          input.type = "text";
+          eye.style.color = "#00e5ff";
+        } else {
+          input.type = "password";
+          eye.style.color = "#4a6080";
+        }
+      }
+
+      // Clock
+      function updateClock() {
+        document.getElementById("clock").textContent =
+          new Date().toLocaleTimeString();
+      }
+      setInterval(updateClock, 1000);
+      updateClock();
+
+      // Navigation
+      function showSection(id, el) {
+        document
+          .querySelectorAll(".section")
+          .forEach((s) => s.classList.remove("active"));
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((n) => n.classList.remove("active"));
+        document.getElementById("sec-" + id).classList.add("active");
+        el.classList.add("active");
+
+        if (id === "srr") {
+          const badge = document.getElementById("srr-role-badge");
+          if (loggedInRole) {
+            const roleColors = {
+              admin: "#00ff9d",
+              officer: "#00e5ff",
+              analyst: "#ffb700",
+              viewer: "#4a6080",
+            };
+            const permissions = {
+              admin: "read, write, delete, manage users",
+              officer: "read, write",
+              analyst: "read, write",
+              viewer: "read only",
+            };
+            badge.style.display = "block";
+            badge.style.color = roleColors[loggedInRole] || "#00e5ff";
+            badge.textContent = `Logged in as: ${loggedInRole.toUpperCase()} — Permissions: ${permissions[loggedInRole]}`;
+          }
+        }
+      }
+
+      // Format JSON nicely
+      function fmt(obj) {
+        return JSON.stringify(obj, null, 2);
+      }
+
+      // Log activity
+      function logActivity(msg, type = "info") {
+        const log = document.getElementById("activity-log");
+        const div = document.createElement("div");
+        div.className = `alert alert-${type}`;
+        div.textContent = msg;
+        log.prepend(div);
+        if (log.children.length > 8) log.lastChild.remove();
+      }
+
+      // ── CCE ──
+      async function runCCE() {
+        const el = document.getElementById("cce-result");
+        el.textContent = "Processing...";
+        try {
+          const r = await fetch(`${API}/cce/recommend`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              cases: +document.getElementById("cce-cases").value,
+              deaths: +document.getElementById("cce-deaths").value,
+              resources: 0.4,
+              hospitals: 3,
+              personnel: 20,
+              region_risk: +document.getElementById("cce-risk").value / 10,
+              supply_level: +document.getElementById("cce-supply").value / 10,
+              coordination_score: 0.5,
+              days_since_outbreak: +document.getElementById("cce-days").value,
+              response_level: 0.6,
+            }),
+          });
+          const d = await r.json();
+          el.textContent = d.written_report || fmt(d);
+          logActivity(`CCE: ${d.recommendation}`, "info");
+        } catch (e) {
+          el.textContent = "Error: " + e.message;
+          el.className = "result-box error";
+        }
+      }
+
+      // ── KAU ──
+      async function runKAU() {
+        const el = document.getElementById("kau-result");
+        el.textContent = "Processing...";
+        try {
+          const r = await fetch(`${API}/kau/advisory`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              risk_score: +document.getElementById("kau-risk").value / 10,
+              resource_level:
+                +document.getElementById("kau-resource").value / 10,
+              days_active: +document.getElementById("kau-days").value,
+              cases: +document.getElementById("kau-cases").value,
+              deaths: +document.getElementById("kau-deaths").value,
+            }),
+          });
+          const d = await r.json();
+          el.textContent = d.written_report || fmt(d);
+          logActivity(
+            `KAU: ${d.outbreak_stage} stage — ${d.risk_level} risk`,
+            "info",
+          );
+        } catch (e) {
+          el.textContent = "Error: " + e.message;
+          el.className = "result-box error";
+        }
+      }
+
+      // ── CRU ──
+      async function runCRU() {
+        const el = document.getElementById("cru-result");
+        el.textContent = "Processing...";
+        try {
+          const payload = {
+            disease: document.getElementById("cru-disease").value,
+            region: document.getElementById("cru-region").value,
+            cases: +document.getElementById("cru-cases").value,
+            deaths: +document.getElementById("cru-deaths").value,
+            fatality_rate: +document.getElementById("cru-fatality").value / 100,
+            spread_rate: +document.getElementById("cru-spread").value / 10,
+          };
+
+          const r = await fetch(`${API}/cru/response`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const d = await r.json();
+          el.textContent = d.written_report || fmt(d);
+          document.getElementById("dash-alert").textContent = d.severity;
+          logActivity(
+            `CRU: ${d.severity} alert — ${d.message.disease} ` +
+              `in ${d.message.affected_region}`,
+            d.severity === "CRITICAL" ? "critical" : "info",
+          );
+
+          // Show coordination hierarchy
+          if (d.coordination_hierarchy) {
+            renderHierarchy(d.coordination_hierarchy, d.severity);
+          }
+        } catch (e) {
+          el.textContent = "Error: " + e.message;
+          el.className = "result-box error";
+        }
+      }
+
+      function renderHierarchy(hierarchy, severity) {
+        const panel = document.getElementById("cru-hierarchy-panel");
+        const display = document.getElementById("cru-hierarchy-display");
+        panel.style.display = "block";
+
+        const tierColors = {
+          1: "#ff4b4b",
+          2: "#ffb700",
+          3: "#00e5ff",
+          4: "#00ff9d",
+        };
+        const statusColors = {
+          ACTIVATED: "#00ff9d",
+          NOTIFIED: "#ffb700",
+          ENGAGED: "#00e5ff",
+        };
+
+        const sorted = [...hierarchy.levels].sort((a, b) => a.tier - b.tier);
+
+        let html = `
+    <div style="margin-bottom:1rem;font-family:'Share Tech Mono',monospace;
+                font-size:0.78rem;color:var(--text-dim)">
+      Reporting Flow:
+      <span style="color:var(--accent);margin-left:8px">
+        ${hierarchy.reporting_structure?.flow || "—"}
+      </span>
+    </div>
+    <div style="margin-bottom:0.5rem;font-family:'Share Tech Mono',monospace;
+                font-size:0.78rem;color:var(--text-dim)">
+      Reporting Frequency:
+      <span style="color:var(--accent4);margin-left:8px">
+        ${hierarchy.reporting_structure?.frequency || "—"}
+      </span>
+    </div>
+    <div style="margin-bottom:1rem;font-family:'Share Tech Mono',monospace;
+                font-size:0.78rem;color:var(--text-dim)">
+      Lead Coordinator:
+      <span style="color:var(--accent3);margin-left:8px">
+        ${hierarchy.reporting_structure?.primary_coordinator || "—"}
+      </span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+                gap:0.75rem">
+  `;
+
+        sorted.forEach((level) => {
+          const color = tierColors[level.tier] || "#00e5ff";
+          const scolor = statusColors[level.status] || "#00e5ff";
+          html += `
+      <div style="background:rgba(0,0,0,0.3);border:1px solid ${color}30;
+                  border-radius:6px;padding:0.75rem">
+        <div style="color:${color};font-family:'Rajdhani',sans-serif;
+                    font-weight:700;font-size:0.95rem;margin-bottom:0.4rem">
+          ${level.level} <span style="font-size:0.7rem">(Tier ${level.tier})</span>
+        </div>
+        <div style="margin-bottom:0.5rem">
+          <span style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;
+                       color:${scolor};background:${scolor}20;
+                       padding:2px 8px;border-radius:8px">
+            ${level.status}
+          </span>
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.4rem">
+          Responsible:
+        </div>
+        ${level.responsible
+          .map(
+            (org) => `
+          <div style="font-size:0.75rem;color:var(--text);margin-bottom:2px">
+            • ${org}
+          </div>
+        `,
+          )
+          .join("")}
+        <div style="font-size:0.75rem;color:var(--text-dim);
+                    margin-top:0.5rem;margin-bottom:0.4rem">
+          Responsibilities:
+        </div>
+        ${level.responsibilities
+          .map(
+            (r) => `
+          <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:2px">
+            → ${r}
+          </div>
+        `,
+          )
+          .join("")}
+      </div>
+    `;
+        });
+
+        html += `</div>`;
+        display.innerHTML = html;
+      }
+
+      // ── IDRU ──
+      async function registerRegion() {
+        const el = document.getElementById("idru-reg-result");
+        try {
+          const r = await fetch(`${API}/idru/register-region`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              region_id: document.getElementById("idru-rid").value,
+              region_name: document.getElementById("idru-rname").value,
+              population: +document.getElementById("idru-pop").value,
+              risk_score: +document.getElementById("idru-risk").value / 10,
+              current_cases: +document.getElementById("idru-cases").value,
+            }),
+          });
+          const d = await r.json();
+          el.textContent = d.written_report || fmt(d);
+          logActivity(
+            `IDRU: Region registered — ${document.getElementById("idru-rname").value}`,
+            "success",
+          );
+        } catch (e) {
+          el.textContent = "Error: " + e.message;
+        }
+      }
+
+      async function addResource() {
+        const el = document.getElementById("idru-add-result");
+        try {
+          const r = await fetch(`${API}/idru/add-resource`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              resource_type: document.getElementById("idru-rtype").value,
+              quantity: +document.getElementById("idru-qty").value,
+              source: document.getElementById("idru-source").value,
+            }),
+          });
+          const d = await r.json();
+          el.textContent = d.written_report || fmt(d);
+          const count =
+            +document.getElementById("dash-resources").textContent || 0;
+          document.getElementById("dash-resources").textContent = count + 1;
+          logActivity(
+            `IDRU: Resource added — ${document.getElementById("idru-rtype").value}`,
+            "success",
+          );
+        } catch (e) {
+          el.textContent = "Error: " + e.message;
+        }
+      }
+
+      async function getTracking() {
+        const el = document.getElementById("idru-track-result");
+        el.textContent = "Loading...";
+        try {
+          const r = await fetch(`${API}/idru/tracking-report`);
+          const d = await r.json();
+          el.textContent = d.written_report || fmt(d);
+        } catch (e) {
+          el.textContent = "Error: " + e.message;
+        }
+      }
+
+      // ── CEU ──
+      async function registerStakeholder() {
+        const el = document.getElementById("ceu-reg-result");
+        try {
+          const r = await fetch(`${API}/ceu/register-stakeholder`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: document.getElementById("ceu-name").value,
+              stakeholder_type: document.getElementById("ceu-type").value,
+              region: document.getElementById("ceu-region").value,
+              contact: document.getElementById("ceu-contact").value,
+            }),
+          });
+          const d = await r.json();
+          el.textContent = fmt(d);
+          const count =
+            +document.getElementById("dash-stakeholders").textContent || 0;
+          document.getElementById("dash-stakeholders").textContent = count + 1;
+          logActivity(
+            `CEU: Stakeholder registered — ${document.getElementById("ceu-name").value}`,
+            "success",
+          );
+        } catch (e) {
+          el.textContent = "Error: " + e.message;
+        }
+      }
+
+      async function getEngagement() {
+        const el = document.getElementById("ceu-summary-result");
+        el.textContent = "Loading...";
+        try {
+          const r = await fetch(`${API}/ceu/engagement-summary`);
+          const d = await r.json();
+          el.textContent = d.written_report || fmt(d);
+        } catch (e) {
+          el.textContent = "Error: " + e.message;
+        }
+      }
+
+      // ── SRR ──
+      async function srrRegister() {
+        const el = document.getElementById("srr-auth-result");
+
+        if (loggedInRole !== "admin") {
+          el.textContent =
+            "Access denied. Only admin users can register new accounts.";
+          el.className = "result-box error";
+          return;
+        }
+
+        try {
+          const r = await fetch(`${API}/srr/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username: document.getElementById("srr-user").value,
+              password: document.getElementById("srr-pass").value,
+              role: document.getElementById("srr-role").value,
+            }),
+          });
+          const d = await r.json();
+          if (d.error) {
+            el.textContent = d.error;
+            el.className = "result-box error";
+          } else {
+            el.textContent = `User registered successfully.\nUsername : ${document.getElementById("srr-user").value}\nRole     : ${document.getElementById("srr-role").value}`;
+            el.className = "result-box";
+            logActivity(
+              `SRR: New user registered — ${document.getElementById("srr-user").value}`,
+              "success",
+            );
+          }
+        } catch (e) {
+          el.textContent = "Error: " + e.message;
+          el.className = "result-box error";
+        }
+      }
+
+      async function srrLogin() {
+        const el = document.getElementById("srr-auth-result");
+        try {
+          const r = await fetch(`${API}/srr/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username: document.getElementById("srr-user").value,
+              password: document.getElementById("srr-pass").value,
+            }),
+          });
+          const d = await r.json();
+          if (d.session_token) {
+            srrToken = d.session_token;
+            el.textContent = `LOGIN SUCCESSFUL\nRole: ${d.role}\nToken: ${srrToken.substring(0, 16)}...`;
+            addTerminalLine(`Logged in as [${d.role.toUpperCase()}]`, "output");
+            logActivity(
+              `SRR: Login successful — ${document.getElementById("srr-user").value}`,
+              "success",
+            );
+          } else {
+            el.textContent = fmt(d);
+          }
+        } catch (e) {
+          el.textContent = "Error: " + e.message;
+        }
+      }
+
+      function addTerminalLine(text, type = "output") {
+        const terminal = document.getElementById("srr-terminal");
+        const div = document.createElement("div");
+        div.className = `terminal-line ${type}`;
+        div.textContent = text;
+        terminal.appendChild(div);
+        terminal.scrollTop = terminal.scrollHeight;
+      }
+
+      async function sendNLP() {
+        const input = document.getElementById("srr-cmd");
+        const cmd = input.value.trim();
+        if (!cmd) return;
+        addTerminalLine(`> ${cmd}`, "input");
+        input.value = "";
+
+        if (!srrToken) {
+          addTerminalLine(
+            "ERROR: Not authenticated. Please login first.",
+            "error",
+          );
+          return;
+        }
+
+        try {
+          const r = await fetch(`${API}/srr/command`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              authorization: srrToken,
+            },
+            body: JSON.stringify({ command: cmd }),
+          });
+
+          const d = await r.json();
+
+          if (d.type === "consultation") {
+            // Display consultation response line by line
+            d.response.split("\n").forEach((line) => {
+              addTerminalLine(line, "output");
+            });
+            logActivity(`SRR Consultation: ${d.topic}`, "info");
+          } else if (d.response) {
+            addTerminalLine(d.response, "output");
+            if (d.commands) {
+              d.commands.forEach((cmd) =>
+                addTerminalLine(`  • ${cmd}`, "output"),
+              );
+            }
+            if (d.consultation_topics) {
+              addTerminalLine("", "output");
+              addTerminalLine("Consultation topics:", "output");
+              d.consultation_topics.forEach((t) =>
+                addTerminalLine(`  • ${t}`, "output"),
+              );
+            }
+            if (d.resources) {
+              d.resources.forEach((res) =>
+                addTerminalLine(
+                  `  [${res.classification}] ${res.name} (ID: ${res.id})`,
+                  "output",
+                ),
+              );
+            }
+            if (d.log) {
+              d.log.forEach((entry) =>
+                addTerminalLine(
+                  `  ${entry.action} by ${entry.username} at ${entry.timestamp}`,
+                  "output",
+                ),
+              );
+            }
+          } else {
+            addTerminalLine(JSON.stringify(d, null, 2), "output");
+          }
+        } catch (e) {
+          addTerminalLine("ERROR: " + e.message, "error");
+        }
+      }
+
+      async function runFullAnalysis() {
+        const result = document.getElementById("fa-result");
+        const pipeline = document.getElementById("fa-pipeline");
+        result.textContent = "Running full analysis...";
+        pipeline.innerHTML = "";
+
+        try {
+          const headers = { "Content-Type": "application/json" };
+          if (srrToken) headers["authorization"] = srrToken;
+
+          // Build neighbouring region data
+          const neighbourRegions = {};
+          const mainRegion = document.getElementById("fa-region").value;
+          const mainCases = document.getElementById("fa-cases").value;
+
+          if (mainCases) {
+            const parsed = mainCases
+              .toString()
+              .split(",")
+              .map((v) => parseInt(v.trim()))
+              .filter((v) => !isNaN(v));
+            if (parsed.length >= 2) {
+              neighbourRegions[mainRegion] = parsed;
+            }
+          }
+
+          for (let i = 2; i <= 4; i++) {
+            const rname = document
+              .getElementById(`fa-region${i}`)
+              ?.value?.trim();
+            const rcases = document
+              .getElementById(`fa-cases${i}`)
+              ?.value?.trim();
+            if (rname && rcases) {
+              const parsed = rcases
+                .split(",")
+                .map((v) => parseInt(v.trim()))
+                .filter((v) => !isNaN(v));
+              if (parsed.length >= 2) {
+                neighbourRegions[rname] = parsed;
+              }
+            }
+          }
+
+          const r = await fetch(`${API}/outbreak/analyse`, {
+            method: "POST",
+            headers: headers,
+            body: JSON.stringify({
+              disease: document.getElementById("fa-disease").value,
+              region: document.getElementById("fa-region").value,
+              cases: +document.getElementById("fa-cases").value,
+              deaths: +document.getElementById("fa-deaths").value,
+              fatality_rate:
+                +document.getElementById("fa-fatality").value / 100,
+              spread_rate: +document.getElementById("fa-spread").value / 10,
+              risk_score: +document.getElementById("fa-risk").value / 10,
+              resource_level:
+                +document.getElementById("fa-resource").value / 10,
+              days_active: +document.getElementById("fa-days").value,
+              population: +document.getElementById("fa-population").value,
+              coordination_score: 0.5,
+              response_level: 0.6,
+              neighbour_regions: neighbourRegions,
+            }),
+          });
+
+          const d = await r.json();
+
+          d.pipeline_log.forEach((log) => {
+            const div = document.createElement("div");
+            div.className = "alert alert-success";
+            div.textContent = "✓ " + log;
+            pipeline.appendChild(div);
+          });
+
+          if (d.written_report) {
+            result.textContent = d.written_report;
+          } else {
+            result.textContent = fmt(d);
+          }
+
+          const faExportBtn = document.getElementById("fa-export-btn");
+          faExportBtn.style.display = "block";
+          faExportBtn.onclick = () => exportPDF(d.report_id, d.timestamp);
+
+          document.getElementById("dash-alert").textContent = d.severity;
+          logActivity(
+            `Full Analysis: ${d.severity} — ${d.disease} in ${d.region}`,
+            d.severity === "CRITICAL" ? "critical" : "info",
+          );
+        } catch (e) {
+          result.textContent = "Error: " + e.message;
+          result.className = "result-box error";
+        }
+      }
+
+      // ── REPORTS HISTORY ──
+      async function loadHistory() {
+        const container = document.getElementById("history-list");
+        container.innerHTML =
+          "<div class='alert alert-info'>Loading reports...</div>";
+
+        try {
+          const r = await fetch(`${API}/reports/history`);
+          const reports = await r.json();
+
+          if (reports.length === 0) {
+            container.innerHTML =
+              "<div class='alert alert-info'>No reports found. Run a Full Analysis to generate one.</div>";
+            return;
+          }
+
+          const severityClass = {
+            CRITICAL: "badge-critical",
+            HIGH: "badge-high",
+            MODERATE: "badge-moderate",
+            LOW: "badge-ok",
+          };
+
+          let html = `
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Report ID</th>
+                        <th>Timestamp</th>
+                        <th>Disease</th>
+                        <th>Region</th>
+                        <th>Cases</th>
+                        <th>Deaths</th>
+                        <th>Severity</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                `;
+
+          reports.forEach((report) => {
+            html += `
+                    <tr>
+                      <td style="font-family:'Share Tech Mono',monospace;font-size:0.75rem">
+                        ${report.report_id}
+                      </td>
+                      <td>${report.timestamp}</td>
+                      <td>${report.disease}</td>
+                      <td>${report.region}</td>
+                      <td>${report.cases}</td>
+                      <td>${report.deaths}</td>
+                      <td>
+                        <span class="badge ${severityClass[report.severity] || "badge-ok"}">
+                          ${report.severity}
+                        </span>
+                      </td>
+                      <td>
+                        <button class="btn btn-ghost" style="padding:2px 10px;font-size:0.75rem;margin-right:4px"
+              onclick="viewReport('${report.report_id}')">
+              VIEW
+            </button>
+            <button class="btn btn-ghost" style="padding:2px 10px;font-size:0.75rem;border-color:#00ff9d;color:#00ff9d"
+              onmouseover="this.style.background='rgba(0,255,157,0.1)'"
+              onmouseout="this.style.background='transparent'"
+              onclick="exportPDF('${report.report_id}', '${report.timestamp}')">
+              ⬇ PDF
+            </button>
+                      </td>
+                    </tr>
+                  `;
+          });
+
+          html += `</tbody></table>`;
+          container.innerHTML = html;
+        } catch (e) {
+          container.innerHTML = `<div class='alert alert-critical'>Error loading reports: ${e.message}</div>`;
+        }
+      }
+
+      async function viewReport(reportId) {
+        const panel = document.getElementById("history-detail-panel");
+        const detail = document.getElementById("history-detail");
+        panel.style.display = "block";
+        detail.textContent = "Loading report details...";
+        panel.scrollIntoView({ behavior: "smooth" });
+
+        try {
+          const r = await fetch(`${API}/reports/history/${reportId}`);
+          const d = await r.json();
+
+          const severityColor = {
+            CRITICAL: "#ff4b4b",
+            HIGH: "#ffb700",
+            MODERATE: "#00e5ff",
+            LOW: "#00ff9d",
+          };
+
+          const color = severityColor[d.severity] || "#00e5ff";
+
+          let text = "";
+          text += "OUTBREAK REPORT DETAIL\n";
+          text += "=".repeat(55) + "\n";
+          text += `Report ID   : ${d.report_id}\n`;
+          text += `Generated   : ${d.timestamp}\n`;
+          text += `Disease     : ${d.disease}\n`;
+          text += `Region      : ${d.region}\n`;
+          text += `Severity    : ${d.severity}\n`;
+          text += "\n";
+
+          text += "OUTBREAK DATA\n";
+          text += "-".repeat(35) + "\n";
+          text += `Total Cases       : ${d.cases}\n`;
+          text += `Total Deaths      : ${d.deaths}\n`;
+          text += `Fatality Rate     : ${(d.fatality_rate * 100).toFixed(2)}%\n`;
+          text += `Spread Rate       : ${(d.spread_rate * 100).toFixed(2)}%\n`;
+          text += `Risk Score        : ${d.risk_score}\n`;
+          text += `Resource Level    : ${d.resource_level}\n`;
+          text += `Days Active       : ${d.days_active}\n`;
+          text += "\n";
+
+          text += "CCE — COORDINATION ACTION TAKEN\n";
+          text += "-".repeat(35) + "\n";
+          text += `${d.cce_recommendation}\n`;
+          text += "\n";
+
+          text += "KAU — HEALTH ADVISORY ISSUED\n";
+          text += "-".repeat(35) + "\n";
+          text += `Outbreak Stage : ${d.kau_stage}\n`;
+          text += `Primary Advisory : ${d.kau_advisory}\n`;
+          text += "\n";
+
+          text += "CRU — RESPONSE SEVERITY\n";
+          text += "-".repeat(35) + "\n";
+          text += `Severity Classification : ${d.cru_severity}\n`;
+          text += "\n";
+
+          text += "IDRU — RESOURCE ALLOCATION\n";
+          text += "-".repeat(35) + "\n";
+          text += `Total Units Allocated : ${d.resources_allocated}\n`;
+          if (d.allocations && d.allocations.length > 0) {
+            text += "\nAllocation Breakdown:\n";
+            d.allocations.forEach((alloc, i) => {
+              text += `\n  Region         : ${alloc.region_name}\n`;
+              text += `  Resource Type  : ${alloc.resource_type}\n`;
+              text += `  Quantity       : ${alloc.quantity_allocated} units\n`;
+              text += `  Priority Score : ${alloc.priority_score}\n`;
+              text += `  Status         : ${alloc.status}\n`;
+              text += `  Tracking ID    : ${alloc.tracking_id}\n`;
+              text += `  Timestamp      : ${alloc.timestamp}\n`;
+            });
+          } else {
+            text += "No allocation breakdown available for this report.\n";
+          }
+          text += "\n";
+
+          text += "CEU — STAKEHOLDER ENGAGEMENT\n";
+          text += "-".repeat(35) + "\n";
+          text += `Stakeholders Engaged : ${d.stakeholders_engaged}\n`;
+          text += "\n";
+
+          text += "=".repeat(55) + "\n";
+          text += "FULL WRITTEN REPORT\n";
+          text += "=".repeat(55) + "\n";
+          text += d.written_report;
+
+          detail.textContent = text;
+        } catch (e) {
+          detail.textContent = "Error loading report: " + e.message;
+          detail.className = "result-box error";
+        }
+      }
+
+      function closeReport() {
+        const panel = document.getElementById("history-detail-panel");
+        const detail = document.getElementById("history-detail");
+        panel.style.display = "none";
+        detail.textContent = "Select a report to view";
+      }
+
+      function exportPDF(reportId, timestamp) {
+        const ts = timestamp.replace(/:/g, "-").replace(" ", "_");
+        const filename = `IARMS_Report_${reportId}_${ts}.pdf`;
+        window.open(`${API}/reports/export/${reportId}`, "_blank");
+      }
+
+      let currentReportId = null;
+
+      async function viewReport(reportId) {
+        currentReportId = reportId;
+        const panel = document.getElementById("history-detail-panel");
+        const detail = document.getElementById("history-detail");
+        const exportBtn = document.getElementById("detail-export-btn");
+        panel.style.display = "block";
+        detail.textContent = "Loading report details...";
+        panel.scrollIntoView({ behavior: "smooth" });
+
+        try {
+          const r = await fetch(`${API}/reports/history/${reportId}`);
+          const d = await r.json();
+
+          let text = "";
+          text += "OUTBREAK REPORT DETAIL\n";
+          text += "=".repeat(55) + "\n";
+          text += `Report ID   : ${d.report_id}\n`;
+          text += `Generated   : ${d.timestamp}\n`;
+          text += `Disease     : ${d.disease}\n`;
+          text += `Region      : ${d.region}\n`;
+          text += `Severity    : ${d.severity}\n\n`;
+
+          text += "OUTBREAK DATA\n";
+          text += "-".repeat(35) + "\n";
+          text += `Total Cases       : ${d.cases}\n`;
+          text += `Total Deaths      : ${d.deaths}\n`;
+          text += `Fatality Rate     : ${(d.fatality_rate * 100).toFixed(2)}%\n`;
+          text += `Spread Rate       : ${(d.spread_rate * 100).toFixed(2)}%\n`;
+          text += `Risk Score        : ${d.risk_score}\n`;
+          text += `Resource Level    : ${d.resource_level}\n`;
+          text += `Days Active       : ${d.days_active}\n\n`;
+
+          text += "CCE — COORDINATION ACTION TAKEN\n";
+          text += "-".repeat(35) + "\n";
+          text += `${d.cce_recommendation}\n\n`;
+
+          text += "KAU — HEALTH ADVISORY ISSUED\n";
+          text += "-".repeat(35) + "\n";
+          text += `Outbreak Stage   : ${d.kau_stage}\n`;
+          text += `Primary Advisory : ${d.kau_advisory}\n\n`;
+
+          text += "CRU — RESPONSE SEVERITY\n";
+          text += "-".repeat(35) + "\n";
+          text += `Severity Classification : ${d.cru_severity}\n\n`;
+
+          text += "IDRU — RESOURCE ALLOCATION\n";
+          text += "-".repeat(35) + "\n";
+          text += `Total Units Allocated : ${d.resources_allocated}\n`;
+          if (d.allocations && d.allocations.length > 0) {
+            text += "\nAllocation Breakdown:\n";
+            d.allocations.forEach((alloc) => {
+              text += `\n  Region         : ${alloc.region_name}\n`;
+              text += `  Resource Type  : ${alloc.resource_type}\n`;
+              text += `  Quantity       : ${alloc.quantity_allocated} units\n`;
+              text += `  Priority Score : ${alloc.priority_score}\n`;
+              text += `  Status         : ${alloc.status}\n`;
+              text += `  Tracking ID    : ${alloc.tracking_id}\n`;
+              text += `  Timestamp      : ${alloc.timestamp}\n`;
+            });
+          }
+          text += "\n";
+
+          text += "CEU — STAKEHOLDER ENGAGEMENT\n";
+          text += "-".repeat(35) + "\n";
+          text += `Stakeholders Engaged : ${d.stakeholders_engaged}\n\n`;
+
+          text += "=".repeat(55) + "\n";
+          text += "FULL WRITTEN REPORT\n";
+          text += "=".repeat(55) + "\n";
+          text += d.written_report;
+
+          detail.textContent = text;
+
+          exportBtn.style.display = "block";
+          exportBtn.onclick = () => exportPDF(reportId, d.timestamp);
+        } catch (e) {
+          detail.textContent = "Error loading report: " + e.message;
+          detail.className = "result-box error";
+        }
+      }
+
+      let rnnChartInstance = null;
+
+      async function runRNN() {
+        const el = document.getElementById("rnn-result");
+        el.textContent = "Analysing trend...";
+        el.className = "result-box";
+
+        const historyInput = document
+          .getElementById("rnn-history")
+          .value.trim();
+        if (!historyInput) {
+          el.textContent =
+            "Please enter at least 4 daily case counts separated by commas.";
+          el.className = "result-box error";
+          return;
+        }
+
+        const caseHistory = historyInput
+          .split(",")
+          .map((v) => parseInt(v.trim()))
+          .filter((v) => !isNaN(v));
+
+        if (caseHistory.length < 4) {
+          el.textContent =
+            "Please enter at least 4 data points for an accurate analysis.";
+          el.className = "result-box error";
+          return;
+        }
+
+        try {
+          const r = await fetch(`${API}/rnn/predict`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              case_history: caseHistory,
+              days_ahead: +document.getElementById("rnn-days").value,
+            }),
+          });
+
+          const d = await r.json();
+          el.className = "result-box";
+          el.textContent = d.written_report || fmt(d);
+
+          // Draw chart
+          const chartContainer = document.getElementById("rnn-chart-container");
+          chartContainer.style.display = "block";
+
+          const historyLabels = caseHistory.map((_, i) => `Day ${i + 1}`);
+          const predLabels = d.predictions.map(
+            (_, i) => `Day ${caseHistory.length + i + 1} (Proj)`,
+          );
+          const allLabels = [...historyLabels, ...predLabels];
+          const historyData = [
+            ...caseHistory,
+            ...Array(d.predictions.length).fill(null),
+          ];
+          const predData = [
+            ...Array(caseHistory.length).fill(null),
+            ...d.predictions,
+          ];
+
+          if (rnnChartInstance) rnnChartInstance.destroy();
+
+          const ctx = document.getElementById("rnn-chart").getContext("2d");
+          rnnChartInstance = new Chart(ctx, {
+            type: "line",
+            data: {
+              labels: allLabels,
+              datasets: [
+                {
+                  label: "Recorded Cases",
+                  data: historyData,
+                  borderColor: "#00e5ff",
+                  backgroundColor: "rgba(0,229,255,0.1)",
+                  borderWidth: 2,
+                  pointRadius: 4,
+                  pointBackgroundColor: "#00e5ff",
+                  tension: 0.3,
+                  spanGaps: false,
+                },
+                {
+                  label: "Projected Cases",
+                  data: predData,
+                  borderColor: "#ff4b4b",
+                  backgroundColor: "rgba(255,75,75,0.1)",
+                  borderWidth: 2,
+                  borderDash: [6, 4],
+                  pointRadius: 4,
+                  pointBackgroundColor: "#ff4b4b",
+                  tension: 0.3,
+                  spanGaps: false,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: {
+                  labels: { color: "#c8daf0", font: { family: "Exo 2" } },
+                },
+                tooltip: { mode: "index", intersect: false },
+              },
+              scales: {
+                x: {
+                  ticks: { color: "#4a6080", font: { size: 10 } },
+                  grid: { color: "rgba(13,37,64,0.8)" },
+                },
+                y: {
+                  ticks: { color: "#4a6080" },
+                  grid: { color: "rgba(13,37,64,0.8)" },
+                  title: {
+                    display: true,
+                    text: "Cases",
+                    color: "#4a6080",
+                  },
+                },
+              },
+            },
+          });
+
+          logActivity(
+            `RNN: Trend — ${d.trend} | Next day projection: ${d.predictions[0]} cases`,
+            d.trend === "rapidly increasing" ? "critical" : "info",
+          );
+          // Update dashboard trend chart
+          updateDashboardChart(caseHistory, d.predictions, d.trend);
+        } catch (e) {
+          el.textContent = "Error: " + e.message;
+          el.className = "result-box error";
+        }
+      }
+
+      let dashChartInstance = null;
+
+      function updateDashboardChart(history, predictions, trend) {
+        const empty = document.getElementById("dash-chart-empty");
+        const canvas = document.getElementById("dash-trend-chart");
+        const meta = document.getElementById("dash-chart-meta");
+
+        empty.style.display = "none";
+        canvas.style.display = "block";
+        meta.style.display = "block";
+
+        const trendColors = {
+          "rapidly increasing": "#ff4b4b",
+          increasing: "#ffb700",
+          stable: "#00e5ff",
+          decreasing: "#00ff9d",
+          fluctuating: "#ffb700",
+        };
+        const trendColor = trendColors[trend] || "#00e5ff";
+
+        const historyLabels = history.map((_, i) => `Day ${i + 1}`);
+        const predLabels = predictions.map(
+          (_, i) => `Day ${history.length + i + 1} (Proj)`,
+        );
+        const allLabels = [...historyLabels, ...predLabels];
+        const histData = [...history, ...Array(predictions.length).fill(null)];
+        const predData = [...Array(history.length).fill(null), ...predictions];
+
+        if (dashChartInstance) dashChartInstance.destroy();
+
+        const ctx = document
+          .getElementById("dash-trend-chart")
+          .getContext("2d");
+        dashChartInstance = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: allLabels,
+            datasets: [
+              {
+                label: "Recorded Cases",
+                data: histData,
+                borderColor: "#00e5ff",
+                backgroundColor: "rgba(0,229,255,0.08)",
+                borderWidth: 2,
+                pointRadius: 3,
+                pointBackgroundColor: "#00e5ff",
+                tension: 0.3,
+                spanGaps: false,
+              },
+              {
+                label: "Projected Cases",
+                data: predData,
+                borderColor: trendColor,
+                backgroundColor: `rgba(${trendColor === "#ff4b4b" ? "255,75,75" : trendColor === "#ffb700" ? "255,183,0" : "0,255,157"},0.08)`,
+                borderWidth: 2,
+                borderDash: [5, 4],
+                pointRadius: 3,
+                pointBackgroundColor: trendColor,
+                tension: 0.3,
+                spanGaps: false,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                labels: {
+                  color: "#c8daf0",
+                  font: { family: "Exo 2", size: 10 },
+                },
+              },
+            },
+            scales: {
+              x: {
+                ticks: { color: "#4a6080", font: { size: 9 } },
+                grid: { color: "rgba(13,37,64,0.6)" },
+              },
+              y: {
+                ticks: { color: "#4a6080", font: { size: 9 } },
+                grid: { color: "rgba(13,37,64,0.6)" },
+                title: {
+                  display: true,
+                  text: "Cases",
+                  color: "#4a6080",
+                  font: { size: 9 },
+                },
+              },
+            },
+          },
+        });
+
+        meta.textContent =
+          `Trend: ${trend.toUpperCase()} | ` +
+          `Last recorded: ${history[history.length - 1]} cases | ` +
+          `Next projection: ${predictions[0]} cases`;
+      }
+
+      // ── MOVEMENT PATTERN RECOGNITION ──
+      // function updateRegionInputs(count) {
+      //   const container = document.getElementById("mpr-regions");
+      //   container.innerHTML = "";
+      //   const defaultNames = [
+      //     "North Central Zone",
+      //     "South West Zone",
+      //     "North East Zone",
+      //     "South South Zone",
+      //     "North West Zone",
+      //     "South East Zone",
+      //   ];
+      //   const defaultCases = [
+      //     "10, 25, 60, 140, 310",
+      //     "5, 12, 30, 75, 160",
+      //     "2, 5, 10, 22, 48",
+      //     "8, 18, 40, 90, 200",
+      //     "3, 7, 15, 35, 80",
+      //     "1, 3, 6, 14, 30",
+      //   ];
+      //   for (let i = 0; i < count; i++) {
+      //     container.innerHTML += `
+      //             <div class="form-group">
+      //               <label>Region ${i + 1} Name</label>
+      //               <input type="text" id="mpr-rname-${i}"
+      //                 value="${defaultNames[i] || "Region " + (i + 1)}" />
+      //             </div>
+      //             <div class="form-group">
+      //               <label>Region ${i + 1} Daily Cases (comma separated)</label>
+      //               <input type="text" id="mpr-rcases-${i}"
+      //                 value="${defaultCases[i] || "10, 20, 30, 40"}" />
+      //             </div>
+      //           `;
+      //   }
+      // }
+
+      // async function runMovement() {
+      //   const el = document.getElementById("mpr-result");
+      //   const count = +document.getElementById("mpr-count").value;
+      //   const days = +document.getElementById("mpr-days").value;
+
+      //   el.textContent = "Analysing movement pattern...";
+      //   el.className = "result-box";
+
+      //   const regionData = {};
+      //   for (let i = 0; i < count; i++) {
+      //     const name = document.getElementById(`mpr-rname-${i}`).value.trim();
+      //     const cases = document
+      //       .getElementById(`mpr-rcases-${i}`)
+      //       .value.split(",")
+      //       .map((v) => parseInt(v.trim()))
+      //       .filter((v) => !isNaN(v));
+      //     if (name && cases.length >= 2) {
+      //       regionData[name] = cases;
+      //     }
+      //   }
+
+      //   if (Object.keys(regionData).length < 2) {
+      //     el.textContent =
+      //       "Please enter at least 2 regions with valid case data.";
+      //     el.className = "result-box error";
+      //     return;
+      //   }
+
+      //   try {
+      //     const r = await fetch(`${API}/rnn/movement`, {
+      //       method: "POST",
+      //       headers: { "Content-Type": "application/json" },
+      //       body: JSON.stringify({ region_data: regionData, days_ahead: days }),
+      //     });
+      //     const d = await r.json();
+      //     el.textContent = d.written_report || fmt(d);
+      //     logActivity(
+      //       `RNN Movement: Epicentre — ${d.epicentre} | Spreading regions — ${d.spreading.length}`,
+      //       d.spreading.length > 0 ? "critical" : "info",
+      //     );
+      //   } catch (e) {
+      //     el.textContent = "Error: " + e.message;
+      //     el.className = "result-box error";
+      //   }
+      // }
+
+      // Initialise region inputs on page load
+      // document.addEventListener("DOMContentLoaded", () => {
+      //   updateRegionInputs(3);
+      // });
+
+      async function loadModelStatus() {
+        const el = document.getElementById("model-status-display");
+        try {
+          const r = await fetch(`${API}/models/status`);
+          const d = await r.json();
+
+          el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:0.5rem">
+        <div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);
+                    border-radius:6px;padding:0.75rem">
+          <div style="color:var(--accent);margin-bottom:0.5rem;font-weight:600">
+            CCE — Deep Q-Network
+          </div>
+          <div>Saved to disk: <span style="color:${d.cce.saved ? "#00ff9d" : "#ff4b4b"}">
+            ${d.cce.saved ? "YES" : "NO"}</span></div>
+          <div>File size: ${d.cce.file_size}</div>
+          <div>Confidence: ${d.cce.confidence}%</div>
+          <div>Memory size: ${d.cce.memory_size} experiences</div>
+          <div>Epsilon: ${d.cce.epsilon}</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);
+                    border-radius:6px;padding:0.75rem">
+          <div style="color:var(--accent);margin-bottom:0.5rem;font-weight:600">
+            KAU — Q-Learning
+          </div>
+          <div>Saved to disk: <span style="color:${d.kau.saved ? "#00ff9d" : "#ff4b4b"}">
+            ${d.kau.saved ? "YES" : "NO"}</span></div>
+          <div>File size: ${d.kau.file_size}</div>
+          <div>States learned: ${d.kau.states_learned}</div>
+          <div>Epsilon: ${d.kau.epsilon}</div>
+        </div>
+      </div>
+    `;
+        } catch (e) {
+          el.textContent = "Error loading model status: " + e.message;
+        }
+      }
+
+      async function loadVisualBoard() {
+        const el = document.getElementById("visual-board-content");
+        el.innerHTML =
+          "<div style='color:var(--text-dim);font-family:\"Share Tech Mono\",monospace;font-size:0.78rem;padding:1rem'>Loading board...</div>";
+
+        try {
+          const r = await fetch(`${API}/idru/visual-report`);
+          const d = await r.json();
+
+          if (d.total_regions === 0) {
+            el.innerHTML =
+              "<div style='color:var(--text-dim);font-family:\"Share Tech Mono\",monospace;font-size:0.78rem;padding:1rem'>No regions registered yet. Register a region first.</div>";
+            return;
+          }
+
+          const riskColors = {
+            HIGH: "#ff4b4b",
+            MODERATE: "#ffb700",
+            LOW: "#00ff9d",
+          };
+
+          // Summary row
+          let html = `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1rem">
+        <div style="background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.15);
+                    border-radius:6px;padding:0.75rem;text-align:center">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;
+                      color:var(--text-dim);margin-bottom:4px">REGIONS</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:1.5rem;
+                      color:var(--accent)">${d.total_regions}</div>
+        </div>
+        <div style="background:rgba(0,255,157,0.06);border:1px solid rgba(0,255,157,0.15);
+                    border-radius:6px;padding:0.75rem;text-align:center">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;
+                      color:var(--text-dim);margin-bottom:4px">RESOURCE TYPES</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:1.5rem;
+                      color:var(--accent3)">${d.total_resources}</div>
+        </div>
+        <div style="background:rgba(255,183,0,0.06);border:1px solid rgba(255,183,0,0.15);
+                    border-radius:6px;padding:0.75rem;text-align:center">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;
+                      color:var(--text-dim);margin-bottom:4px">TOTAL DISTRIBUTED</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:1.5rem;
+                      color:var(--accent4)">${d.total_distributed}</div>
+        </div>
+        <div style="background:rgba(255,75,75,0.06);border:1px solid rgba(255,75,75,0.15);
+                    border-radius:6px;padding:0.75rem;text-align:center">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;
+                      color:var(--text-dim);margin-bottom:4px">UNDERSUPPLIED</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:1.5rem;
+                      color:var(--accent2)">${d.undersupplied_regions.length}</div>
+        </div>
+      </div>
+    `;
+
+          // Undersupplied alert
+          if (d.undersupplied_regions.length > 0) {
+            html += `
+        <div class="alert alert-critical" style="margin-bottom:1rem">
+          ⚠ Undersupplied regions: ${d.undersupplied_regions.join(", ")}
+        </div>
+      `;
+          }
+
+          // Region cards
+          html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0.75rem;margin-bottom:1rem">`;
+
+          d.regions.forEach((region) => {
+            const riskColor = riskColors[region.risk_level] || "#00e5ff";
+            const coverageColor =
+              region.coverage_percent >= 70
+                ? "#00ff9d"
+                : region.coverage_percent >= 40
+                  ? "#ffb700"
+                  : "#ff4b4b";
+
+            html += `
+        <div style="background:rgba(0,0,0,0.3);border:1px solid ${riskColor}30;
+                    border-radius:6px;padding:0.75rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;
+                      margin-bottom:0.5rem">
+            <div style="font-family:'Rajdhani',sans-serif;font-weight:700;
+                        font-size:0.95rem;color:var(--text)">
+              ${region.name}
+            </div>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:0.68rem;
+                         color:${riskColor};background:${riskColor}20;
+                         padding:2px 8px;border-radius:8px">
+              ${region.risk_level} RISK
+            </span>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;
+                      margin-bottom:0.75rem;font-family:'Share Tech Mono',monospace;
+                      font-size:0.72rem;color:var(--text-dim)">
+            <div>Population: <span style="color:var(--text)">${region.population.toLocaleString()}</span></div>
+            <div>Cases: <span style="color:var(--accent2)">${region.current_cases}</span></div>
+            <div>Risk Score: <span style="color:${riskColor}">${region.risk_score}</span></div>
+            <div>Allocated: <span style="color:var(--accent3)">${region.total_allocated} units</span></div>
+          </div>
+
+          <div style="margin-bottom:4px;font-family:'Share Tech Mono',monospace;
+                      font-size:0.7rem;color:var(--text-dim)">
+            Resource Coverage: <span style="color:${coverageColor}">${region.coverage_percent}%</span>
+          </div>
+          <div style="background:rgba(0,0,0,0.4);border-radius:4px;height:8px;overflow:hidden">
+            <div style="height:100%;width:${Math.min(region.coverage_percent, 100)}%;
+                        background:${coverageColor};border-radius:4px;
+                        transition:width 0.5s ease">
+            </div>
+          </div>
+          <div style="margin-top:4px;font-family:'Share Tech Mono',monospace;
+                      font-size:0.65rem;color:var(--text-dim)">
+            Last updated: ${region.last_updated}
+          </div>
+        </div>
+      `;
+          });
+          html += `</div>`;
+
+          // Resource status table
+          if (d.resources.length > 0) {
+            html += `
+        <div style="margin-top:0.5rem">
+          <div style="font-family:'Rajdhani',sans-serif;font-weight:600;
+                      font-size:0.9rem;color:var(--accent);margin-bottom:0.5rem;
+                      letter-spacing:1px">
+            RESOURCE INVENTORY
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Resource ID</th>
+                <th>Type</th>
+                <th>Total</th>
+                <th>Distributed</th>
+                <th>Available</th>
+                <th>Status</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+            d.resources.forEach((res) => {
+              const statusColor =
+                res.status === "Distributed" ? "#00ff9d" : "#00e5ff";
+              html += `
+          <tr>
+            <td style="font-family:'Share Tech Mono',monospace;font-size:0.72rem">
+              ${res.resource_id}
+            </td>
+            <td>${res.type}</td>
+            <td>${res.total_quantity}</td>
+            <td style="color:#ffb700">${res.distributed}</td>
+            <td style="color:#00ff9d">${res.available}</td>
+            <td>
+              <span style="font-family:'Share Tech Mono',monospace;font-size:0.68rem;
+                           color:${statusColor};background:${statusColor}20;
+                           padding:2px 8px;border-radius:8px">
+                ${res.status}
+              </span>
+            </td>
+            <td style="font-size:0.78rem;color:var(--text-dim)">${res.source}</td>
+          </tr>
+        `;
+            });
+            html += `</tbody></table></div>`;
+          }
+
+          el.innerHTML = html;
+
+          // Update dashboard counter
+          document.getElementById("dash-resources").textContent =
+            d.total_resources;
+        } catch (e) {
+          el.innerHTML = `<div class='alert alert-critical'>Error: ${e.message}</div>`;
+        }
+      }
+    </script>
+  </body>
+</html>
