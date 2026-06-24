@@ -46,12 +46,82 @@ class CoordinationControlEngine:
         self.memory.append((state, action, reward, next_state, done))
 
     def act(self, state):
-        if np.random.rand() <= self.epsilon:
-            return random.randrange(self.action_size)
         state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         with torch.no_grad():
-            action_values = self.model(state_tensor)
-        return torch.argmax(action_values).item()
+            q_values = self.model(state_tensor).cpu().numpy()[0]
+
+        self.last_q_values = q_values.tolist()
+
+        if np.random.rand() <= self.epsilon:
+            chosen = random.randrange(self.action_size)
+            self.last_was_exploration = True
+        else:
+            chosen = int(np.argmax(q_values))
+            self.last_was_exploration = False
+
+        return chosen
+    
+    def explain_decision(self, action_index):
+        """
+        Returns a Q-value comparison across all actions and a plain
+        English explanation of why the chosen action was selected.
+        """
+        if not hasattr(self, "last_q_values") or self.last_q_values is None:
+            return {
+                "explanation": "No Q-values available for this decision.",
+                "comparison": []
+            }
+
+        q_values = self.last_q_values
+        comparison = []
+        for i, action_name in enumerate(self.actions):
+            comparison.append({
+                "action":      action_name,
+                "q_value":     round(q_values[i], 4),
+                "is_selected": (i == action_index)
+            })
+
+        comparison.sort(key=lambda x: x["q_value"], reverse=True)
+
+        chosen_q = q_values[action_index]
+        sorted_q = sorted(q_values, reverse=True)
+        top_q    = sorted_q[0]
+        second_q = sorted_q[1] if len(sorted_q) > 1 else sorted_q[0]
+        margin   = round(top_q - second_q, 4)
+
+        if getattr(self, "last_was_exploration", False):
+            explanation = (
+                f"This recommendation was selected through exploration "
+                f"(random selection), which the system uses occasionally "
+                f"to discover potentially better strategies. Exploration "
+                f"currently occurs in approximately {round(self.epsilon * 100, 1)}% "
+                f"of decisions and decreases as the model gains more experience."
+            )
+        elif margin < 0.05:
+            explanation = (
+                f"The model rated '{self.actions[action_index]}' very "
+                f"closely against other options (margin of {margin} between "
+                f"the top two choices). This indicates the outbreak state "
+                f"falls into a borderline zone where multiple response "
+                f"actions are considered similarly viable. Human judgement "
+                f"is strongly recommended to break this tie."
+            )
+        else:
+            explanation = (
+                f"The model rated '{self.actions[action_index]}' "
+                f"{margin} points higher than the next best option "
+                f"('{comparison[1]['action']}'), based on the combination "
+                f"of case count, fatality rate, resource availability, and "
+                f"outbreak duration provided. This is a confident "
+                f"recommendation with a clear margin over alternatives."
+            )
+
+        return {
+            "explanation":       explanation,
+            "comparison":        comparison,
+            "decision_margin":   margin,
+            "was_exploration":   getattr(self, "last_was_exploration", False)
+    }
 
     def replay(self, batch_size=32):
         if len(self.memory) < batch_size:
@@ -130,6 +200,19 @@ class CoordinationControlEngine:
         lines.append("")
         lines.append(f"{result['recommendation']}.")
         lines.append("")
+        lines.append("WHY THIS RECOMMENDATION (EXPLAINABILITY)")
+        lines.append("")
+        lines.append(f"  {result.get('explanation', 'No explanation available.')}")
+        lines.append("")
+        lines.append("  Q-VALUE COMPARISON ACROSS ALL ACTIONS:")
+        lines.append("")
+        for item in result.get("q_value_comparison", []):
+            marker = " ← SELECTED" if item["is_selected"] else ""
+            lines.append(
+                f"    {item['action']:<50} Q-value: {item['q_value']:>8}{marker}"
+            )
+        lines.append("")
+        lines.append("")
         lines.append(
             f"This action has been identified as the most appropriate response given the "
             f"current risk profile, the number of active cases in the region, and the availability "
@@ -156,7 +239,6 @@ class CoordinationControlEngine:
     def get_recommendation(self, state):
         action_index = self.act(state)
 
-        # Simulate reward based on outbreak state
         risk_score   = state[5] if len(state) > 5 else 0.5
         supply_level = state[6] if len(state) > 6 else 0.5
         reward = 1.0 if risk_score > 0.6 and action_index in [0, 3] else 0.5
@@ -166,10 +248,16 @@ class CoordinationControlEngine:
         self.remember(state, action_index, reward, next_state, done)
         self.replay()
 
+        explanation = self.explain_decision(action_index)
+
         result = {
             "action_index":   action_index,
             "recommendation": self.actions[action_index],
-            "confidence":     round((1 - self.epsilon) * 100, 2)
+            "confidence":      round((1 - self.epsilon) * 100, 2),
+            "explanation":     explanation["explanation"],
+            "q_value_comparison": explanation["comparison"],
+            "decision_margin": explanation["decision_margin"],
+            "was_exploration": explanation["was_exploration"]
         }
         self.save_model()
         result["written_report"] = self.generate_written_report(result, state)

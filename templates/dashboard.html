@@ -1238,6 +1238,26 @@
                 <span class="dot"></span>CCE RECOMMENDATION
               </div>
               <div class="result-box" id="cce-result">Awaiting input...</div>
+
+              <div
+                id="cce-explain-panel"
+                style="display: none; margin-top: 1rem"
+              >
+                <div class="panel-title" style="font-size: 0.9rem">
+                  <span class="dot"></span>WHY THIS RECOMMENDATION
+                </div>
+                <div
+                  id="cce-explanation-text"
+                  style="
+                    font-family: &quot;Share Tech Mono&quot;, monospace;
+                    font-size: 0.78rem;
+                    color: var(--text-dim);
+                    margin-bottom: 0.75rem;
+                    line-height: 1.6;
+                  "
+                ></div>
+                <div id="cce-qvalue-bars"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -2594,10 +2614,72 @@
           const d = await r.json();
           el.textContent = d.written_report || fmt(d);
           logActivity(`CCE: ${d.recommendation}`, "info");
+
+          renderCCEExplanation(d);
         } catch (e) {
           el.textContent = "Error: " + e.message;
           el.className = "result-box error";
         }
+      }
+
+      function renderCCEExplanation(d) {
+        const panel = document.getElementById("cce-explain-panel");
+        const textEl = document.getElementById("cce-explanation-text");
+        const barsEl = document.getElementById("cce-qvalue-bars");
+
+        if (!d.q_value_comparison || d.q_value_comparison.length === 0) {
+          panel.style.display = "none";
+          return;
+        }
+
+        panel.style.display = "block";
+        textEl.textContent = d.explanation || "No explanation available.";
+
+        const qValues = d.q_value_comparison.map((item) => item.q_value);
+        const maxAbs = Math.max(...qValues.map((v) => Math.abs(v)), 0.01);
+
+        let html = "";
+        d.q_value_comparison.forEach((item) => {
+          const widthPercent = Math.max(
+            5,
+            Math.abs(item.q_value / maxAbs) * 100,
+          );
+          const barColor = item.is_selected ? "#00ff9d" : "#4a6080";
+          const textColor = item.is_selected ? "#00ff9d" : "var(--text-dim)";
+
+          html += `
+      <div style="margin-bottom:0.6rem">
+        <div style="display:flex;justify-content:space-between;
+                    font-size:0.75rem;margin-bottom:3px;
+                    color:${textColor};
+                    font-family:'Share Tech Mono',monospace">
+          <span>${item.action}${item.is_selected ? " ✓" : ""}</span>
+          <span>${item.q_value}</span>
+        </div>
+        <div style="background:rgba(0,0,0,0.3);border-radius:3px;
+                    height:8px;overflow:hidden">
+          <div style="height:100%;width:${widthPercent}%;
+                      background:${barColor};border-radius:3px;
+                      transition:width 0.5s ease"></div>
+        </div>
+      </div>
+    `;
+        });
+
+        if (d.was_exploration) {
+          html += `
+      <div style="margin-top:0.5rem;padding:0.5rem;
+                  background:rgba(255,183,0,0.08);
+                  border:1px solid rgba(255,183,0,0.2);
+                  border-radius:4px;font-size:0.72rem;
+                  color:var(--accent4)">
+        ⚠ This decision involved exploration — the model occasionally
+        tries non-optimal actions to discover better strategies over time.
+      </div>
+    `;
+        }
+
+        barsEl.innerHTML = html;
       }
 
       // ── KAU ──

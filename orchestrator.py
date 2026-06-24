@@ -214,10 +214,7 @@ class IARMSOrchestrator:
             "region":       outbreak_input["region"],
             "severity":     severity,
             "pipeline_log": pipeline_log,
-            "cce": {
-                "recommendation": cce_result["recommendation"],
-                "confidence":     cce_result["confidence"]
-            },
+            "cce": cce_result,
             "kau": {
                 "primary_advisory":          kau_result["primary_advisory"],
                 "outbreak_stage":            kau_result["outbreak_stage"],
