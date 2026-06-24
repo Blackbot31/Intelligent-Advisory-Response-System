@@ -946,7 +946,7 @@
             <div class="stat-card green">
               <div class="stat-label">Resources Tracked</div>
               <div class="stat-value" id="dash-resources">0</div>
-              <div class="stat-sub">Via IDRU</div>
+              <div class="stat-sub" id="dash-resources-sub">Via IDRU</div>
             </div>
             <div class="stat-card yellow">
               <div class="stat-label">Stakeholders</div>
@@ -2197,6 +2197,7 @@
             loggedInRole = d.role;
             document.getElementById("login-screen").style.display = "none";
             applyRoleView(d.role);
+            loadDashboardSummary();
             logActivity(
               `Logged in as ${username} [${d.role.toUpperCase()}]`,
               "success",
@@ -2441,6 +2442,9 @@
             badge.textContent = `Logged in as: ${loggedInRole.toUpperCase()} — Permissions: ${permissions[loggedInRole]}`;
           }
         }
+        if (id === "dashboard") {
+          loadDashboardSummary();
+        }
       }
 
       // Format JSON nicely
@@ -2544,6 +2548,7 @@
               `in ${d.message.affected_region}`,
             d.severity === "CRITICAL" ? "critical" : "info",
           );
+          loadDashboardSummary();
 
           // Show coordination hierarchy
           if (d.coordination_hierarchy) {
@@ -2690,13 +2695,14 @@
           });
           const d = await r.json();
           el.textContent = d.written_report || fmt(d);
-          const count =
-            +document.getElementById("dash-resources").textContent || 0;
-          document.getElementById("dash-resources").textContent = count + 1;
+          // const count =
+          //   +document.getElementById("dash-resources").textContent || 0;
+          // document.getElementById("dash-resources").textContent = count + 1;
           logActivity(
             `IDRU: Resource added — ${document.getElementById("idru-rtype").value}`,
             "success",
           );
+          loadDashboardSummary();
         } catch (e) {
           el.textContent = "Error: " + e.message;
         }
@@ -2730,13 +2736,14 @@
           });
           const d = await r.json();
           el.textContent = fmt(d);
-          const count =
-            +document.getElementById("dash-stakeholders").textContent || 0;
-          document.getElementById("dash-stakeholders").textContent = count + 1;
+          // const count =
+          //   +document.getElementById("dash-stakeholders").textContent || 0;
+          // document.getElementById("dash-stakeholders").textContent = count + 1;
           logActivity(
             `CEU: Stakeholder registered — ${document.getElementById("ceu-name").value}`,
             "success",
           );
+          loadDashboardSummary();
         } catch (e) {
           el.textContent = "Error: " + e.message;
         }
@@ -2991,6 +2998,7 @@
             `Full Analysis: ${d.severity} — ${d.disease} in ${d.region}`,
             d.severity === "CRITICAL" ? "critical" : "info",
           );
+          loadDashboardSummary();
         } catch (e) {
           result.textContent = "Error: " + e.message;
           result.className = "result-box error";
@@ -4015,6 +4023,23 @@
         } catch (e) {
           el.innerHTML = `<div class='alert alert-critical'>
       Error: ${e.message}</div>`;
+        }
+      }
+
+      async function loadDashboardSummary() {
+        try {
+          const r = await fetch(`${API}/dashboard/summary`);
+          const d = await r.json();
+
+          document.getElementById("dash-alert").textContent = d.alert_level;
+          document.getElementById("dash-resources").textContent =
+            d.total_resources;
+          document.getElementById("dash-resources-sub").textContent =
+            `${d.available_resources} available, ${d.distributed_resources} distributed`;
+          document.getElementById("dash-stakeholders").textContent =
+            d.total_stakeholders;
+        } catch (e) {
+          console.error("Failed to load dashboard summary:", e);
         }
       }
     </script>

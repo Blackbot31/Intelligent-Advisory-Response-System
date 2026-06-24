@@ -574,6 +574,31 @@ def outcomes_summary():
         "most_effective_action": best_action,
         "recent_outcomes":       outcomes[:5]
     }
+    
+@app.get("/dashboard/summary")
+def dashboard_summary():
+    reports = crud.load_all_reports()
+    latest_severity = reports[0]["severity"] if reports else "—"
+
+    visual = idru.regions, idru.resource_registry
+    total_resources = len(idru.resource_registry)
+    total_available = sum(
+        r["available_quantity"] for r in idru.resource_registry.values()
+    )
+    total_distributed = sum(
+        r["total_quantity"] - r["available_quantity"]
+        for r in idru.resource_registry.values()
+    )
+
+    total_stakeholders = len(ceu.stakeholders)
+
+    return {
+        "alert_level":        latest_severity,
+        "total_resources":    total_resources,
+        "available_resources": total_available,
+        "distributed_resources": total_distributed,
+        "total_stakeholders": total_stakeholders
+    }
 
 # ─── Run Server ───────────────────────────────────────────────────────────────
 if __name__ == "__main__":
