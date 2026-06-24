@@ -23,6 +23,65 @@
         --glow: 0 0 12px rgba(0, 229, 255, 0.35);
         --glow-red: 0 0 12px rgba(255, 75, 75, 0.35);
       }
+      [data-theme="light"] {
+        --bg: #f0f4f8;
+        --panel: #ffffff;
+        --border: #d4dce6;
+        --accent: #0086a8;
+        --accent2: #c83b3b;
+        --accent3: #0a9d68;
+        --accent4: #b8860b;
+        --text: #1a2733;
+        --text-dim: #5a6b7a;
+        --glow: 0 0 8px rgba(0, 134, 168, 0.25);
+        --glow-red: 0 0 8px rgba(200, 59, 59, 0.25);
+      }
+
+      [data-theme="light"] body::before {
+        background-image:
+          linear-gradient(rgba(0, 134, 168, 0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 134, 168, 0.04) 1px, transparent 1px);
+      }
+
+      [data-theme="light"] .login-screen-bg {
+        background: #f0f4f8 !important;
+      }
+
+      [data-theme="light"] header {
+        background: rgba(240, 244, 248, 0.92) !important;
+      }
+
+      [data-theme="light"] .result-box {
+        background: rgba(0, 0, 0, 0.03) !important;
+        color: #0a6b48 !important;
+      }
+
+      [data-theme="light"] .result-box.error {
+        color: var(--accent2) !important;
+      }
+
+      [data-theme="light"] input,
+      [data-theme="light"] select,
+      [data-theme="light"] textarea {
+        background: #f7fafc !important;
+        color: var(--text) !important;
+      }
+
+      [data-theme="light"] select option {
+        background: #ffffff !important;
+      }
+
+      [data-theme="light"] .terminal {
+        background: rgba(0, 0, 0, 0.03) !important;
+      }
+
+      [data-theme="light"] .terminal-line.output {
+        color: #0a6b48 !important;
+      }
+
+      [data-theme="light"] ::-webkit-scrollbar-thumb {
+        background: #c0ccd8;
+      }
       *,
       *::before,
       *::after {
@@ -635,7 +694,6 @@
       style="
         position: fixed;
         inset: 0;
-        background: #050d1a;
         z-index: 9999;
         display: flex;
         align-items: center;
@@ -852,6 +910,33 @@
           "
         ></div>
         <div class="header-time" id="clock">--:--:--</div>
+
+        <button
+          onclick="toggleTheme()"
+          id="theme-toggle-btn"
+          style="
+            background: transparent;
+            border: 1px solid #0d2540;
+            border-radius: 4px;
+            color: #4a6080;
+            font-size: 16px;
+            padding: 4px 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+          "
+          onmouseover="
+            this.style.borderColor = '#00e5ff';
+            this.style.color = '#00e5ff';
+          "
+          onmouseout="
+            this.style.borderColor = 'var(--border)';
+            this.style.color = 'var(--text-dim)';
+          "
+          title="Toggle light/dark mode"
+        >
+          🌙
+        </button>
+
         <button
           onclick="logoutUser()"
           style="
@@ -2168,6 +2253,26 @@
 
     <script>
       const API = "http://127.0.0.1:8000";
+      // ── THEME ──
+      function applyTheme(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+        const btn = document.getElementById("theme-toggle-btn");
+        if (btn) btn.textContent = theme === "light" ? "☀️" : "🌙";
+        localStorage.setItem("iarms-theme", theme);
+      }
+
+      function toggleTheme() {
+        const current =
+          document.documentElement.getAttribute("data-theme") || "dark";
+        applyTheme(current === "dark" ? "light" : "dark");
+      }
+
+      // Apply saved theme immediately on load
+      (function () {
+        const saved = localStorage.getItem("iarms-theme") || "dark";
+        applyTheme(saved);
+      })();
+
       let srrToken = null;
       let loggedInRole = null;
 
