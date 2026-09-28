@@ -1,0 +1,4 @@
+method,MAE,RMSE,MAPE(%)
+RNN (subsystems/rnn.py),199.37,208.64,25.3
+Last-value baseline,48.51,53.44,6.4
+Linear-growth baseline,76.01,82.00,9.0
